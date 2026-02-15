@@ -1,5 +1,20 @@
 import streamlit as st
 import pandas as pd
+import os
+import subprocess
+
+# Ensure playwright browsers are installed
+try:
+    import playwright
+except ImportError:
+    subprocess.run(["pip", "install", "playwright"])
+
+@st.cache_resource
+def install_playwright():
+    subprocess.run(["playwright", "install", "chromium"])
+
+install_playwright()
+
 from database import get_all_leads, update_lead_status, delete_lead, get_daily_summary, init_db
 from scraper import RealEstateScraper
 from database import save_lead
