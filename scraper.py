@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
+import praw
+import os
 import random
 import time
 try:
@@ -41,6 +43,42 @@ class RealEstateScraper:
                 browser.close()
         except Exception as e:
             print(f"Playwright scraping failed: {e}")
+        return leads
+
+    def scrape_reddit(self, subreddits=['realestate', 'HomeBuying', 'property', 'investing']):
+        """Scrapes Reddit for property leads."""
+        client_id = os.getenv("REDDIT_CLIENT_ID")
+        client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+        user_agent = os.getenv("REDDIT_USER_AGENT", "RealEstateLeadBot/1.0")
+
+        if not client_id or not client_secret:
+            print("Reddit credentials not set. Skipping Reddit scraping.")
+            return []
+
+        leads = []
+        try:
+            reddit = praw.Reddit(
+                client_id=client_id,
+                client_secret=client_secret,
+                user_agent=user_agent
+            )
+
+            keywords = ['selling', 'buying', 'for sale', 'looking to buy', 'owner selling', 'searching for property']
+
+            for sub_name in subreddits:
+                subreddit = reddit.subreddit(sub_name)
+                # Search new posts
+                for submission in subreddit.new(limit=10):
+                    text = (submission.title + " " + submission.selftext).lower()
+                    if any(kw in text for kw in keywords):
+                        leads.append({
+                            "post_title": submission.title,
+                            "full_description": submission.selftext[:500] + ("..." if len(submission.selftext) > 500 else ""),
+                            "source_platform": f"Reddit/r/{sub_name}"
+                        })
+        except Exception as e:
+            print(f"Reddit scraping failed: {e}")
+
         return leads
 
     def scrape_mock_leads(self):
@@ -85,6 +123,10 @@ class RealEstateScraper:
         print("Starting scraping...")
         # In a real scenario, you'd iterate over multiple URLs/platforms
         raw_leads = self.scrape_mock_leads()
+
+        # Add Reddit leads if available
+        reddit_leads = self.scrape_reddit()
+        raw_leads.extend(reddit_leads)
 
         processed_leads = []
         for raw in raw_leads:
