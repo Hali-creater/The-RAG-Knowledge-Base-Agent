@@ -43,10 +43,21 @@ This system automatically scrapes, classifies, and scores real estate leads from
      SMTP_USER = "your_email@gmail.com"
      SMTP_PASSWORD = "your_app_password"
      EMAIL_RECEIVER = "receiver_email@gmail.com"
+
+     # Reddit API (Optional)
+     REDDIT_CLIENT_ID = "your_client_id"
+     REDDIT_CLIENT_SECRET = "your_client_secret"
+     REDDIT_USER_AGENT = "RealEstateLeadBot/1.0"
      ```
 4. **Deploy**: Click "Deploy!".
 
-## Project Structure
+## Reddit API Integration
+To use Reddit scraping:
+1. Go to [Reddit App Preferences](https://www.reddit.com/prefs/apps).
+2. Create a "script" type app.
+3. Note the Client ID (under the app name) and the Secret.
+4. Add these to your `.env` file or Streamlit secrets.
+
 - `streamlit_app.py`: Main dashboard for Streamlit deployment.
 - `main.py`: Entry point for local FastAPI deployment.
 - `scraper.py`: Logic for finding leads.
