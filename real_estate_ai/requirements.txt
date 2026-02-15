@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+apscheduler
+requests
+beautifulsoup4
+playwright
+lxml
+spacy
+scikit-learn
+nltk
+pandas
+jinja2
+python-multipart
+python-dotenv
