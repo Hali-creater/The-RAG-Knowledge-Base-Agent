@@ -14,9 +14,18 @@ class RAGAgent:
     def __init__(self, model_name: str = "gpt-4o"):
         self.vector_store = VectorStore()
         self.memory_manager = MemoryManager()
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            try:
+                import streamlit as st
+                api_key = st.secrets.get("OPENAI_API_KEY")
+            except Exception:
+                pass
+
         self.llm = ChatOpenAI(
             model=model_name,
-            openai_api_key=os.getenv("OPENAI_API_KEY")
+            openai_api_key=api_key
         )
         self.text_splitter = TextSplitter()
 

@@ -15,11 +15,15 @@ A Retrieval-Augmented Generation (RAG) agent that answers questions based on you
    pip install -r requirements.txt
    ```
 2. Set your OpenAI API key in a `.env` file (see `.env.example`).
-3. Run the application:
+3. Run the application (FastAPI):
    ```bash
    python main.py
    ```
-4. Open your browser at `http://localhost:8000`.
+4. Or run the Streamlit application:
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+5. Open your browser at the provided URL.
 
 ## Testing
 Run unit tests:
