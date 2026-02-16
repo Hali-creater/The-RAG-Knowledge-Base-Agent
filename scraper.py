@@ -7,6 +7,7 @@ import email
 from email.header import decode_header
 import os
 import time
+import urllib.parse
 from extractor import extract_entities
 from classifier import classify_intent
 from scorer import calculate_score
@@ -62,28 +63,40 @@ class RealEstateScraper:
         return leads
 
     def scrape_craigslist(self):
-        """Scrapes Craigslist RSS feeds."""
-        # Example for multiple cities/categories
-        urls = [
-            "https://newyork.craigslist.org/search/reo?format=rss",
-            "https://losangeles.craigslist.org/search/reo?format=rss"
+        """Scrapes Craigslist RSS feeds for high-intent keywords."""
+        city = os.getenv("TARGET_CITY", "dallas")
+        keywords = [
+            "owner financing", "must sell", "motivated seller",
+            "FSBO", "sell my house", "cash buyer needed",
+            "relocating", "moving soon", "job transfer"
         ]
+        # reo: real estate - by owner, hww: housing wanted
+        sections = ["reo", "hww"]
+
         leads = []
-        for url in urls:
-            try:
-                print(f"[*] Checking Craigslist RSS: {url}")
-                response = requests.get(url, headers=self.headers)
-                soup = BeautifulSoup(response.content, 'xml')
-                items = soup.find_all('item')
-                for item in items:
-                    leads.append({
-                        "title": item.find('title').text,
-                        "description": item.find('description').text,
-                        "url": item.find('link').text,
-                        "source": "Craigslist"
-                    })
-            except Exception as e:
-                print(f"Craigslist error: {e}")
+        for section in sections:
+            for kw in keywords:
+                query = urllib.parse.quote_plus(kw)
+                url = f"https://{city}.craigslist.org/search/{section}?query={query}&format=rss"
+                try:
+                    print(f"[*] Checking Craigslist RSS ({section}): {kw}")
+                    response = requests.get(url, headers=self.headers)
+                    if response.status_code != 200:
+                        continue
+
+                    soup = BeautifulSoup(response.content, 'xml')
+                    items = soup.find_all('item')
+                    for item in items:
+                        leads.append({
+                            "title": item.find('title').text,
+                            "description": item.find('description').text,
+                            "url": item.find('link').text,
+                            "source": f"Craigslist ({section})"
+                        })
+                    # Sleep slightly to avoid being throttled
+                    time.sleep(1)
+                except Exception as e:
+                    print(f"Craigslist error for {kw}: {e}")
         return leads
 
     def scrape_google_alerts(self):
@@ -150,22 +163,38 @@ class RealEstateScraper:
 
     def scrape_google_search(self):
         """Basic Google Search result monitoring via Playwright."""
+        city = os.getenv("TARGET_CITY", "Dallas")
         queries = [
-            "'must sell' house", "'urgent sale' real estate",
-            "looking to buy property", "motivated seller real estate",
-            "cash buyer property", "need to sell my home fast"
+            f"\"thinking about selling my house in {city}\"",
+            f"\"selling my home in {city}\"",
+            f"\"sell my house fast {city}\"",
+            f"\"FSBO {city}\"",
+            f"\"for sale by owner {city}\"",
+            f"\"how to sell my house in {city}\"",
+            f"\"moving to {city}\"",
+            f"\"relocating to {city}\"",
+            f"\"first time home buyer {city}\"",
+            f"\"looking to buy a house in {city}\"",
+            f"\"recommend a realtor in {city}\"",
+            f"\"best real estate agent in {city}\"",
+            f"\"divorce and selling house {city}\"",
+            f"\"inherited property {city}\"",
+            f"\"pre foreclosure {city}\"",
+            f"\"behind on mortgage {city}\"",
+            f"\"need to sell house quickly {city}\""
         ]
+
         leads = []
         try:
-            print("[*] Starting Google Search monitoring...")
+            print(f"[*] Starting Google Search monitoring for {city}...")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page()
                 for query in queries:
-                    page.goto(f"https://www.google.com/search?q={query}")
+                    page.goto(f"https://www.google.com/search?q={urllib.parse.quote(query)}")
                     page.wait_for_timeout(2000)
                     results = page.query_selector_all("div.g")
-                    for res in results[:5]:
+                    for res in results[:3]: # limit to top 3 per query to avoid noise
                         title_el = res.query_selector("h3")
                         link_el = res.query_selector("a")
                         snippet_el = res.query_selector("div.VwiC3b")
@@ -176,6 +205,8 @@ class RealEstateScraper:
                                 "url": link_el.get_attribute("href"),
                                 "source": "Google"
                             })
+                    # Random delay between queries
+                    time.sleep(2)
                 browser.close()
         except Exception as e:
             print(f"Google error: {e}")

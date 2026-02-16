@@ -60,11 +60,31 @@ To use Reddit scraping:
 4. Add these to your `.env` file or Streamlit secrets.
 
 ## Google Alerts Setup
-1. Create real estate alerts at [Google Alerts](https://www.google.com/alerts).
-2. Set "Deliver to" to your Gmail address.
-3. Enable IMAP in your Gmail settings.
-4. Generate an **App Password** in your Google Account security settings.
-5. Add `IMAP_USER` and `IMAP_PASSWORD` to your `.env` file or Streamlit secrets.
+
+To get the best results, create separate Google Alerts for each of the following phrases. **Use quotation marks** for exact matching. Set "Deliver to" to your Gmail address and ensure IMAP is enabled.
+
+### 🏠 Seller Intent
+- `"thinking about selling my house in Dallas"`
+- `"selling my home in Dallas"`
+- `"sell my house fast Dallas"`
+- `"FSBO Dallas"`
+- `"for sale by owner Dallas"`
+- `"how to sell my house in Dallas"`
+
+### 🏡 Buyer Intent
+- `"moving to Dallas"`
+- `"relocating to Dallas"`
+- `"first time home buyer Dallas"`
+- `"looking to buy a house in Dallas"`
+- `"recommend a realtor in Dallas"`
+- `"best real estate agent in Dallas"`
+
+### 💰 Urgent Signals (GOLD)
+- `"divorce and selling house Dallas"`
+- `"inherited property Dallas"`
+- `"pre foreclosure Dallas"`
+- `"behind on mortgage Dallas"`
+- `"need to sell house quickly Dallas"`
 
 ## 🛠 Troubleshooting & Pro Tips
 
