@@ -7,7 +7,7 @@ This system automatically scrapes, classifies, and scores real estate leads from
 - **AI Classification**: Uses NLP and scikit-learn to identify Buyers vs. Sellers.
 - **Lead Scoring**: Prioritizes leads based on urgency and relevance.
 - **Dashboard**: Professional web UI to manage leads.
-- **Email Alerts**: Notifications for high-priority leads.
+- **Manual Organization**: Add internal notes and manage lead status.
 
 ## Local Setup
 
@@ -64,6 +64,5 @@ To use Reddit scraping:
 - `classifier.py`: AI logic for intent detection.
 - `extractor.py`: NLP logic for entity extraction (phone, email, price).
 - `scorer.py`: Logic for lead scoring.
-- `database.py`: SQLite database management.
+- `database.py`: SQLite database management and CSV export.
 - `scheduler.py`: Background job management.
-- `notifier.py`: Email notification logic.

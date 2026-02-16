@@ -4,120 +4,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real Estate AI Lead Intelligence</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .lead-card {
-            transition: transform 0.2s;
-        }
-        .lead-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        .badge-high { background-color: #dc3545; }
-        .badge-medium { background-color: #ffc107; color: black; }
-        .badge-low { background-color: #198754; }
+        body { background-color: #f3f4f6; }
+        .intent-high { color: #dc2626; font-weight: bold; }
+        .intent-medium { color: #d97706; font-weight: bold; }
+        .intent-low { color: #059669; font-weight: bold; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+<body class="bg-gray-100">
 
-    <nav class="bg-blue-800 p-4 shadow-lg text-white">
+    <nav class="bg-indigo-900 p-4 shadow-xl text-white">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">🏠 Real Estate Lead Intelligence</h1>
-            <div class="flex space-x-4">
-                <a href="/" class="hover:text-gray-300">Dashboard</a>
-                <span id="summary-total" class="bg-blue-600 px-3 py-1 rounded-full text-sm">Total Leads: {{ leads|length }}</span>
+            <h1 class="text-2xl font-black tracking-tight">🔎 LEAD INTELLIGENCE ENGINE</h1>
+            <div class="flex items-center space-x-6">
+                <span class="bg-indigo-700 px-4 py-1 rounded-full text-sm font-bold">Today: {{ summary.total }} Leads</span>
+                <a href="/export_csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold transition">📥 Export CSV</a>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto mt-8 p-4">
+    <div class="container mx-auto mt-8 px-4">
 
-        <!-- Filters & Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-                <h3 class="text-gray-500 text-sm uppercase font-bold">Daily Summary</h3>
-                <p class="text-3xl font-bold text-gray-800">{{ summary.total }}</p>
-                <div class="text-sm text-gray-600">Sellers: {{ summary.sellers }} | Buyers: {{ summary.buyers }}</div>
-            </div>
-
-            <div class="col-span-3 bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-gray-500 text-sm uppercase font-bold mb-4">Filter Leads</h3>
-                <form action="/" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <select name="intent_type" class="form-select border rounded p-2">
-                        <option value="">All Intent</option>
-                        <option value="Seller" {% if filters.intent_type == 'Seller' %}selected{% endif %}>Seller</option>
-                        <option value="Buyer" {% if filters.intent_type == 'Buyer' %}selected{% endif %}>Buyer</option>
+        <!-- Filters -->
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-8">
+            <form action="/" method="get" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Source</label>
+                    <select name="source" class="form-select text-sm mt-1">
+                        <option value="">All Sources</option>
+                        <option value="Reddit" {% if filters.source == 'Reddit' %}selected{% endif %}>Reddit</option>
+                        <option value="Craigslist" {% if filters.source == 'Craigslist' %}selected{% endif %}>Craigslist</option>
+                        <option value="Google" {% if filters.source == 'Google' %}selected{% endif %}>Google</option>
                     </select>
-                    <input type="text" name="location" placeholder="Location" class="form-control border rounded p-2" value="{{ filters.location or '' }}">
-                    <select name="status" class="form-select border rounded p-2">
-                        <option value="">All Status</option>
-                        <option value="New" {% if filters.status == 'New' %}selected{% endif %}>New</option>
-                        <option value="Contacted" {% if filters.status == 'Contacted' %}selected{% endif %}>Contacted</option>
-                        <option value="Closed" {% if filters.status == 'Closed' %}selected{% endif %}>Closed</option>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Lead Type</label>
+                    <select name="lead_type" class="form-select text-sm mt-1">
+                        <option value="">All Types</option>
+                        <option value="Seller" {% if filters.lead_type == 'Seller' %}selected{% endif %}>Seller</option>
+                        <option value="Buyer" {% if filters.lead_type == 'Buyer' %}selected{% endif %}>Buyer</option>
+                        <option value="Investor" {% if filters.lead_type == 'Investor' %}selected{% endif %}>Investor</option>
                     </select>
-                    <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">Filter</button>
-                </form>
-            </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Intent Level</label>
+                    <select name="intent_level" class="form-select text-sm mt-1">
+                        <option value="">All Levels</option>
+                        <option value="High Intent" {% if filters.intent_level == 'High Intent' %}selected{% endif %}>High</option>
+                        <option value="Medium Intent" {% if filters.intent_level == 'Medium Intent' %}selected{% endif %}>Medium</option>
+                        <option value="Low Intent" {% if filters.intent_level == 'Low Intent' %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Sort By</label>
+                    <select name="sort_by" class="form-select text-sm mt-1">
+                        <option value="created_at" {% if sort.by == 'created_at' %}selected{% endif %}>Date</option>
+                        <option value="intent_score" {% if sort.by == 'intent_score' %}selected{% endif %}>Score</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700 transition">Apply Filters</button>
+                </div>
+                <div>
+                    <a href="/" class="w-full block text-center text-gray-500 text-sm font-bold py-2">Reset</a>
+                </div>
+            </form>
         </div>
 
-        <!-- Leads Table/List -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <table class="min-w-full leading-normal">
-                <thead>
-                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                        <th class="py-3 px-6 text-left">Score</th>
-                        <th class="py-3 px-6 text-left">Title & Info</th>
-                        <th class="py-3 px-6 text-left">Intent</th>
-                        <th class="py-3 px-6 text-left">Contact</th>
-                        <th class="py-3 px-6 text-center">Status</th>
-                        <th class="py-3 px-6 text-center">Actions</th>
+        <!-- Leads Table -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="min-w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr class="text-gray-400 text-xs font-black uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left">Intent</th>
+                        <th class="px-6 py-4 text-left">Lead Info</th>
+                        <th class="px-6 py-4 text-left">Contact</th>
+                        <th class="px-6 py-4 text-left">Notes</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="px-6 py-4 text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="text-gray-600 text-sm font-light">
+                <tbody class="divide-y divide-gray-100">
                     {% for lead in leads %}
-                    <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-6 text-left whitespace-nowrap">
-                            <span class="px-3 py-1 rounded-full text-white text-xs font-bold
-                                {% if lead.lead_score >= 80 %}bg-red-500{% elif lead.lead_score >= 50 %}bg-yellow-500 text-black{% else %}bg-green-500{% endif %}">
-                                {{ lead.lead_score }}
-                            </span>
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-black {% if 'High' in lead.intent_level %}text-red-600{% elif 'Medium' in lead.intent_level %}text-amber-500{% else %}text-emerald-500{% endif %}">
+                                {{ lead.intent_score }}
+                            </div>
+                            <div class="text-[10px] uppercase font-bold text-gray-400">{{ lead.intent_level }}</div>
                         </td>
-                        <td class="py-3 px-6 text-left">
-                            <div class="font-bold text-gray-800">{{ lead.post_title }}</div>
-                            <div class="text-xs text-gray-500">📍 {{ lead.location or 'Unknown' }} | 💰 ${{ lead.price or 'N/A' }}</div>
-                            <div class="text-xs text-gray-400 mt-1 italic">{{ lead.source_platform }} | {{ lead.timestamp }}</div>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-gray-900 leading-tight">
+                                <a href="{{ lead.url }}" target="_blank" class="hover:underline">{{ lead.title }}</a>
+                            </div>
+                            <div class="flex space-x-2 mt-1">
+                                <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded font-bold text-gray-600 uppercase">{{ lead.source }}</span>
+                                <span class="text-[10px] bg-indigo-50 px-2 py-0.5 rounded font-bold text-indigo-600 uppercase">{{ lead.lead_type }}</span>
+                                <span class="text-[10px] text-gray-400 font-medium">{{ lead.location }}</span>
+                            </div>
                         </td>
-                        <td class="py-3 px-6 text-left">
-                            <span class="px-2 py-1 rounded text-xs font-semibold
-                                {% if lead.intent_type == 'Seller' %}bg-purple-100 text-purple-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                                {{ lead.intent_type }}
-                            </span>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs">
+                            <div class="font-bold text-gray-700">📞 {{ lead.phone or '---' }}</div>
+                            <div class="text-gray-500">📧 {{ lead.email or '---' }}</div>
                         </td>
-                        <td class="py-3 px-6 text-left">
-                            <div>📞 {{ lead.phone or 'N/A' }}</div>
-                            <div>📧 {{ lead.email or 'N/A' }}</div>
+                        <td class="px-6 py-4">
+                            <textarea onblur="updateNotes({{ lead.id }}, this.value)" class="w-full text-xs p-2 border rounded bg-gray-50 focus:bg-white transition h-16" placeholder="Add notes...">{{ lead.notes }}</textarea>
                         </td>
-                        <td class="py-3 px-6 text-center">
-                            <select onchange="updateStatus({{ lead.id }}, this.value)" class="text-xs border rounded p-1">
+                        <td class="px-6 py-4 text-center">
+                            <select onchange="updateStatus({{ lead.id }}, this.value)" class="text-xs font-bold border rounded p-1
+                                {% if lead.status == 'New' %}bg-blue-50 text-blue-700 border-blue-200{% elif lead.status == 'Contacted' %}bg-orange-50 text-orange-700 border-orange-200{% else %}bg-gray-100 text-gray-600 border-gray-200{% endif %}">
                                 <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
                                 <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
                                 <option value="Closed" {% if lead.status == 'Closed' %}selected{% endif %}>Closed</option>
+                                <option value="Ignored" {% if lead.status == 'Ignored' %}selected{% endif %}>Ignored</option>
                             </select>
                         </td>
-                        <td class="py-3 px-6 text-center">
-                            <div class="flex item-center justify-center">
-                                <button onclick="deleteLead({{ lead.id }})" class="w-4 mr-2 transform hover:text-red-500 hover:scale-110">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="C19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </div>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="deleteLead({{ lead.id }})" class="text-red-400 hover:text-red-600 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -128,22 +135,28 @@
 
     <script>
         async function updateStatus(id, status) {
-            const response = await fetch(`/update_status/${id}?status=${status}`, { method: 'POST' });
-            if (response.ok) {
-                // Optional: show a toast or feedback
-                console.log("Status updated");
-            }
+            await fetch(`/update_lead/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: status})
+            });
+            location.reload();
+        }
+
+        async function updateNotes(id, notes) {
+            await fetch(`/update_lead/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({notes: notes})
+            });
         }
 
         async function deleteLead(id) {
-            if (confirm("Are you sure you want to delete this lead?")) {
-                const response = await fetch(`/delete_lead/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    location.reload();
-                }
+            if (confirm("Delete this lead?")) {
+                await fetch(`/delete_lead/${id}`, { method: 'DELETE' });
+                location.reload();
             }
         }
     </script>
-
 </body>
 </html>

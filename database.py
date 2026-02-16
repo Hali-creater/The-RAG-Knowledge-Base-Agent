@@ -1,6 +1,9 @@
 import sqlite3
 import datetime
 import os
+import hashlib
+import csv
+from io import StringIO
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "leads.db")
@@ -14,50 +17,58 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS leads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
+            source TEXT,
+            title TEXT,
+            description TEXT,
+            url TEXT UNIQUE,
+            location TEXT,
+            lead_type TEXT,
             phone TEXT,
             email TEXT,
-            source_platform TEXT,
-            intent_type TEXT,
-            property_details TEXT,
-            price REAL,
-            location TEXT,
-            lead_score INTEGER,
+            intent_score INTEGER,
+            intent_level TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             status TEXT DEFAULT 'New',
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            post_title TEXT,
-            full_description TEXT,
-            intent_confidence REAL,
-            UNIQUE(source_platform, phone, email, full_description)
+            notes TEXT,
+            content_hash TEXT
         )
     """)
     conn.commit()
     conn.close()
 
+def get_content_hash(text):
+    return hashlib.md5(text.encode('utf-8')).hexdigest() if text else ""
+
 def save_lead(lead_data):
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Check if URL exists
+    url = lead_data.get('url')
+    if not url:
+        return
+
     try:
         cursor.execute("""
             INSERT OR IGNORE INTO leads (
-                name, phone, email, source_platform, intent_type,
-                property_details, price, location, lead_score,
-                status, post_title, full_description, intent_confidence
+                source, title, description, url, location,
+                lead_type, phone, email, intent_score,
+                intent_level, status, notes, content_hash
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            lead_data.get('name'),
+            lead_data.get('source'),
+            lead_data.get('title'),
+            lead_data.get('description'),
+            url,
+            lead_data.get('location'),
+            lead_data.get('lead_type'),
             lead_data.get('phone'),
             lead_data.get('email'),
-            lead_data.get('source_platform'),
-            lead_data.get('intent_type'),
-            lead_data.get('property_details'),
-            lead_data.get('price'),
-            lead_data.get('location'),
-            lead_data.get('lead_score'),
+            lead_data.get('intent_score'),
+            lead_data.get('intent_level'),
             lead_data.get('status', 'New'),
-            lead_data.get('post_title'),
-            lead_data.get('full_description'),
-            lead_data.get('intent_confidence')
+            lead_data.get('notes', ''),
+            lead_data.get('content_hash')
         ))
         conn.commit()
     except sqlite3.IntegrityError:
@@ -65,7 +76,7 @@ def save_lead(lead_data):
     finally:
         conn.close()
 
-def get_all_leads(filters=None):
+def get_all_leads(filters=None, sort_by="created_at", sort_order="DESC"):
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -74,7 +85,7 @@ def get_all_leads(filters=None):
     params = []
 
     if filters:
-        allowed_columns = ["intent_type", "status", "location"]
+        allowed_columns = ["source", "lead_type", "status", "intent_level", "location"]
         conditions = []
         for key, value in filters.items():
             if key in allowed_columns and value:
@@ -83,7 +94,14 @@ def get_all_leads(filters=None):
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
-    query += " ORDER BY timestamp DESC"
+    # Basic sorting validation
+    allowed_sort = ["intent_score", "created_at"]
+    if sort_by not in allowed_sort:
+        sort_by = "created_at"
+    if sort_order not in ["ASC", "DESC"]:
+        sort_order = "DESC"
+
+    query += f" ORDER BY {sort_by} {sort_order}"
 
     cursor.execute(query, params)
     rows = cursor.fetchall()
@@ -91,10 +109,12 @@ def get_all_leads(filters=None):
     conn.close()
     return leads
 
-def update_lead_status(lead_id, status):
+def update_lead(lead_id, updates):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE leads SET status = ? WHERE id = ?", (status, lead_id))
+    for key, value in updates.items():
+        if key in ["status", "notes"]:
+            cursor.execute(f"UPDATE leads SET {key} = ? WHERE id = ?", (value, lead_id))
     conn.commit()
     conn.close()
 
@@ -112,11 +132,11 @@ def get_daily_summary():
     cursor.execute("""
         SELECT
             COUNT(*) as total,
-            SUM(CASE WHEN intent_type = 'Seller' THEN 1 ELSE 0 END) as sellers,
-            SUM(CASE WHEN intent_type = 'Buyer' THEN 1 ELSE 0 END) as buyers,
-            AVG(lead_score) as avg_score
+            SUM(CASE WHEN lead_type = 'Seller' THEN 1 ELSE 0 END) as sellers,
+            SUM(CASE WHEN lead_type = 'Buyer' THEN 1 ELSE 0 END) as buyers,
+            AVG(intent_score) as avg_score
         FROM leads
-        WHERE date(timestamp) = ?
+        WHERE date(created_at) = ?
     """, (today,))
     summary = cursor.fetchone()
     conn.close()
@@ -127,6 +147,20 @@ def get_daily_summary():
         "avg_score": summary[3] or 0
     }
 
+def export_to_csv(leads):
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=[
+        "title", "source", "location", "lead_type", "phone", "email",
+        "intent_score", "intent_level", "url", "created_at", "status", "notes"
+    ], extrasaction='ignore')
+    writer.writeheader()
+    for lead in leads:
+        # Map created_at to Date for header consistency if needed
+        lead_copy = lead.copy()
+        lead_copy["Date"] = lead_copy.get("created_at")
+        writer.writerow(lead_copy)
+    return output.getvalue()
+
 if __name__ == "__main__":
     init_db()
-    print("Database initialized.")
+    print("Database updated.")
