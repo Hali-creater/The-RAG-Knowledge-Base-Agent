@@ -1,36 +1,40 @@
 def calculate_score(lead_data):
     score = 0
-    description = lead_data.get('full_description', '').lower()
+    description = lead_data.get('description', '').lower()
+    title = lead_data.get('title', '').lower()
+    full_text = title + " " + description
 
-    # 1. Keyword Strength & Urgency (up to 40 points)
-    urgency_keywords = ['urgent', 'immediately', 'must sell', 'now', 'asap', 'quick', 'fast']
-    urgency_count = sum(1 for kw in urgency_keywords if kw in description)
-    score += min(40, urgency_count * 15)
-
-    # 2. Contact Availability (up to 30 points)
-    if lead_data.get('phone'):
+    # 1. Urgent words (+20)
+    urgent_keywords = ['urgent', 'asap', 'immediately', 'must sell', 'need to sell fast']
+    if any(kw in full_text for kw in urgent_keywords):
         score += 20
-    if lead_data.get('email'):
+
+    # 2. Motivation words (+15)
+    motivation_keywords = ['divorce', 'inherited', 'relocating', 'foreclosure', 'job transfer']
+    if any(kw in full_text for kw in motivation_keywords):
+        score += 15
+
+    # 3. Financial signal (+10)
+    financial_keywords = ['discount', 'below market', 'price mentioned']
+    if any(kw in full_text for kw in financial_keywords) or lead_data.get('price'):
         score += 10
 
-    # 3. Price and Location detected (up to 20 points)
-    if lead_data.get('price'):
-        score += 10
-    if lead_data.get('location') and lead_data.get('location') != "Unknown":
-        score += 10
+    # 4. Contact info present (+20)
+    if lead_data.get('phone') or lead_data.get('email'):
+        score += 20
 
-    # 4. Intent Confidence (up to 10 points)
-    score += int(lead_data.get('intent_confidence', 0) * 10)
+    # 5. Recent post (+10)
+    # Since we scrape in real-time, we can often assume posts we just found are recent.
+    # If we have a timestamp and it's within 24h, we add 10.
+    # For now, we'll give 10 as default if it was just scraped.
+    score += 10
 
-    return min(100, score)
+    # Classification
+    if score <= 25:
+        level = "Low Intent"
+    elif score <= 50:
+        level = "Medium Intent"
+    else:
+        level = "High Intent"
 
-if __name__ == "__main__":
-    test_lead = {
-        'full_description': 'Urgent sale! Must sell now. Beautiful house.',
-        'phone': '1234567890',
-        'email': 'test@test.com',
-        'price': 500000,
-        'location': 'New York',
-        'intent_confidence': 1.0
-    }
-    print(f"Lead Score: {calculate_score(test_lead)}")
+    return score, level

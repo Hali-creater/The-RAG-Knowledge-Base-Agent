@@ -1,11 +1,8 @@
-import threading
-import time
 import logging
 from scheduler import start_scheduler
 from dashboard import run_dashboard
 from database import init_db
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -13,17 +10,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def main():
-    logger.info("Initializing Real Estate AI Lead Intelligence System...")
-
-    # Initialize Database
+    logger.info("Initializing Multi-Source Real Estate Lead Intelligence System...")
     init_db()
 
-    # Start Scheduler in a background thread
-    logger.info("Starting background scheduler...")
+    # Start Scheduler
     scheduler = start_scheduler()
 
-    # Run Dashboard in the main thread
-    logger.info("Starting web dashboard on http://localhost:8000")
+    # Run Dashboard
+    logger.info("Dashboard available at http://localhost:8000")
     try:
         run_dashboard()
     except KeyboardInterrupt:
