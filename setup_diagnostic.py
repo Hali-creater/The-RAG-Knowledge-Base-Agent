@@ -9,7 +9,7 @@ def check_python_version():
     return True
 
 def check_dependencies():
-    required = ["fastapi", "uvicorn", "apscheduler", "requests", "bs4", "playwright", "spacy", "sklearn", "pandas", "praw"]
+    required = ["fastapi", "uvicorn", "apscheduler", "requests", "bs4", "playwright", "spacy", "sklearn", "pandas", "praw", "jinja2", "dotenv"]
     missing = []
     for lib in required:
         try:
@@ -60,6 +60,23 @@ def check_env():
     print("[+] Environment variables seem to be configured.")
     return True
 
+def check_playwright():
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            # Try to launch chromium
+            try:
+                browser = p.chromium.launch(headless=True)
+                browser.close()
+                print("[+] Playwright Chromium is installed and working.")
+                return True
+            except Exception as e:
+                print(f"[!] Playwright browser error: {e}")
+                print("    Run: playwright install chromium")
+                return False
+    except ImportError:
+        return False
+
 def check_db():
     try:
         conn = sqlite3.connect("leads.db")
@@ -79,6 +96,7 @@ def run_diagnostics():
         check_python_version(),
         check_dependencies(),
         check_spacy(),
+        check_playwright(),
         check_env(),
         check_db()
     ]

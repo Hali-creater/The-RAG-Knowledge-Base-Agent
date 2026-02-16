@@ -8,10 +8,13 @@ from email.header import decode_header
 import os
 import time
 import urllib.parse
+import logging
 from extractor import extract_entities
 from classifier import classify_intent
 from scorer import calculate_score
 from database import get_content_hash
+
+logger = logging.getLogger(__name__)
 
 class RealEstateScraper:
     def __init__(self):
@@ -26,6 +29,7 @@ class RealEstateScraper:
         user_agent = os.getenv("REDDIT_USER_AGENT", "RealEstateLeadBot/1.0")
 
         if not client_id or not client_secret:
+            logger.warning("Reddit API keys missing. Skipping Reddit.")
             return []
 
         leads = []
@@ -37,8 +41,7 @@ class RealEstateScraper:
             )
             subreddits = [
                 'realestate', 'HomeBuying', 'property', 'investing',
-                'RealEstateTechnology', 'realtors', 'HouseHunting',
-                'FirstTimeHomeBuyer', 'commercialrealestate'
+                'realtors', 'HouseHunting', 'FirstTimeHomeBuyer'
             ]
             keywords = [
                 'selling', 'buying', 'for sale', 'looking to buy',
@@ -47,9 +50,9 @@ class RealEstateScraper:
             ]
 
             for sub_name in subreddits:
-                print(f"[*] Checking r/{sub_name}...")
+                logger.info(f"Checking r/{sub_name}...")
                 subreddit = reddit.subreddit(sub_name)
-                for submission in subreddit.new(limit=25):
+                for submission in subreddit.new(limit=15):
                     text = (submission.title + " " + submission.selftext).lower()
                     if any(kw in text for kw in keywords):
                         leads.append({
@@ -59,44 +62,90 @@ class RealEstateScraper:
                             "source": "Reddit"
                         })
         except Exception as e:
-            print(f"Reddit error: {e}")
+            logger.error(f"Reddit error: {e}")
         return leads
 
-    def scrape_craigslist(self):
-        """Scrapes Craigslist RSS feeds for high-intent keywords."""
+    def _scrape_playwright_sources(self):
+        """Combines Craigslist and Google Search into a single Playwright session."""
         city = os.getenv("TARGET_CITY", "dallas")
-        keywords = [
+        cl_keywords = [
             "owner financing", "must sell", "motivated seller",
             "FSBO", "sell my house", "cash buyer needed",
-            "relocating", "moving soon", "job transfer"
+            "relocating", "moving soon"
         ]
-        # reo: real estate - by owner, hww: housing wanted
-        sections = ["reo", "hww"]
+        google_queries = [
+            f"\"sell my house fast {city}\"",
+            f"\"thinking about selling my house in {city}\"",
+            f"\"looking to buy a house in {city}\"",
+            f"\"need to sell house quickly {city}\""
+        ]
 
         leads = []
-        for section in sections:
-            for kw in keywords:
-                query = urllib.parse.quote_plus(kw)
-                url = f"https://{city}.craigslist.org/search/{section}?query={query}&format=rss"
-                try:
-                    print(f"[*] Checking Craigslist RSS ({section}): {kw}")
-                    response = requests.get(url, headers=self.headers)
-                    if response.status_code != 200:
-                        continue
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(user_agent=self.headers['User-Agent'])
+                page = context.new_page()
 
-                    soup = BeautifulSoup(response.content, 'xml')
-                    items = soup.find_all('item')
-                    for item in items:
-                        leads.append({
-                            "title": item.find('title').text,
-                            "description": item.find('description').text,
-                            "url": item.find('link').text,
-                            "source": f"Craigslist ({section})"
-                        })
-                    # Sleep slightly to avoid being throttled
-                    time.sleep(1)
-                except Exception as e:
-                    print(f"Craigslist error for {kw}: {e}")
+                # 1. Craigslist Scraping
+                for section in ["reo", "hww"]: # reo=owner, hww=housing wanted
+                    for kw in cl_keywords:
+                        query = urllib.parse.quote_plus(kw)
+                        url = f"https://{city}.craigslist.org/search/{section}?query={query}"
+                        logger.info(f"Checking Craigslist ({section}): {kw}")
+                        try:
+                            page.goto(url, wait_until="networkidle")
+                            # Craigslist search results are in 'li.cl-static-search-result' or similar
+                            # Let's try to find 'a.result-title' or new structure
+                            page.wait_for_timeout(1000)
+
+                            # Detect if blocked
+                            if "blocked" in page.title().lower():
+                                logger.error(f"Craigslist blocked our request for {kw}")
+                                continue
+
+                            # New CL structure uses .cl-search-result
+                            items = page.query_selector_all(".cl-search-result, .result-row")
+                            for item in items[:10]:
+                                link_el = item.query_selector("a.cl-app-anchor, a.result-title")
+                                if link_el:
+                                    title = link_el.inner_text()
+                                    href = link_el.get_attribute("href")
+                                    leads.append({
+                                        "title": title,
+                                        "description": f"Craigslist lead found in {section} section.",
+                                        "url": href,
+                                        "source": f"Craigslist ({section})"
+                                    })
+                        except Exception as e:
+                            logger.error(f"Error scraping CL {kw}: {e}")
+                        time.sleep(2)
+
+                # 2. Google Search Scraping
+                logger.info(f"Starting Google Search monitoring for {city}...")
+                for query in google_queries:
+                    try:
+                        page.goto(f"https://www.google.com/search?q={urllib.parse.quote(query)}")
+                        page.wait_for_timeout(2000)
+                        results = page.query_selector_all("div.g")
+                        for res in results[:3]:
+                            title_el = res.query_selector("h3")
+                            link_el = res.query_selector("a")
+                            snippet_el = res.query_selector("div.VwiC3b")
+                            if title_el and link_el:
+                                leads.append({
+                                    "title": title_el.inner_text(),
+                                    "description": snippet_el.inner_text() if snippet_el else "",
+                                    "url": link_el.get_attribute("href"),
+                                    "source": "Google"
+                                })
+                    except Exception as e:
+                        logger.error(f"Google error for {query}: {e}")
+                    time.sleep(3)
+
+                browser.close()
+        except Exception as e:
+            logger.error(f"Playwright main error: {e}")
         return leads
 
     def scrape_google_alerts(self):
@@ -106,21 +155,21 @@ class RealEstateScraper:
         imap_password = os.getenv("IMAP_PASSWORD")
 
         if not imap_user or not imap_password:
+            logger.warning("IMAP credentials missing. Skipping Google Alerts.")
             return []
 
         leads = []
         try:
-            print("[*] Checking Google Alerts via IMAP...")
+            logger.info("Checking Google Alerts via IMAP...")
             mail = imaplib.IMAP4_SSL(imap_server)
             mail.login(imap_user, imap_password)
             mail.select("inbox")
 
-            # Search for emails from Google Alerts
             status, messages = mail.search(None, '(FROM "googlealerts-noreply@google.com")')
             if status != "OK":
                 return []
 
-            for num in messages[0].split()[-10:]: # Get last 10 alerts
+            for num in messages[0].split()[-10:]:
                 status, data = mail.fetch(num, "(RFC822)")
                 if status != "OK":
                     continue
@@ -139,17 +188,12 @@ class RealEstateScraper:
 
                         if body:
                             soup = BeautifulSoup(body, 'html.parser')
-                            # Google Alerts HTML structure usually has links in <a> tags
-                            # with titles in them.
                             for link in soup.find_all('a'):
                                 title = link.get_text().strip()
                                 url = link.get('href')
-                                # Filter for actual alerts (often have 'url?' in href)
                                 if url and "google.com/url?" in url and len(title) > 20:
-                                    # Extract the real URL from Google's redirect
                                     import urllib.parse
                                     parsed_url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('url', [url])[0]
-
                                     leads.append({
                                         "title": title,
                                         "description": "Lead detected via Google Alerts.",
@@ -158,58 +202,7 @@ class RealEstateScraper:
                                     })
             mail.logout()
         except Exception as e:
-            print(f"Google Alerts error: {e}")
-        return leads
-
-    def scrape_google_search(self):
-        """Basic Google Search result monitoring via Playwright."""
-        city = os.getenv("TARGET_CITY", "Dallas")
-        queries = [
-            f"\"thinking about selling my house in {city}\"",
-            f"\"selling my home in {city}\"",
-            f"\"sell my house fast {city}\"",
-            f"\"FSBO {city}\"",
-            f"\"for sale by owner {city}\"",
-            f"\"how to sell my house in {city}\"",
-            f"\"moving to {city}\"",
-            f"\"relocating to {city}\"",
-            f"\"first time home buyer {city}\"",
-            f"\"looking to buy a house in {city}\"",
-            f"\"recommend a realtor in {city}\"",
-            f"\"best real estate agent in {city}\"",
-            f"\"divorce and selling house {city}\"",
-            f"\"inherited property {city}\"",
-            f"\"pre foreclosure {city}\"",
-            f"\"behind on mortgage {city}\"",
-            f"\"need to sell house quickly {city}\""
-        ]
-
-        leads = []
-        try:
-            print(f"[*] Starting Google Search monitoring for {city}...")
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
-                for query in queries:
-                    page.goto(f"https://www.google.com/search?q={urllib.parse.quote(query)}")
-                    page.wait_for_timeout(2000)
-                    results = page.query_selector_all("div.g")
-                    for res in results[:3]: # limit to top 3 per query to avoid noise
-                        title_el = res.query_selector("h3")
-                        link_el = res.query_selector("a")
-                        snippet_el = res.query_selector("div.VwiC3b")
-                        if title_el and link_el:
-                            leads.append({
-                                "title": title_el.inner_text(),
-                                "description": snippet_el.inner_text() if snippet_el else "",
-                                "url": link_el.get_attribute("href"),
-                                "source": "Google"
-                            })
-                    # Random delay between queries
-                    time.sleep(2)
-                browser.close()
-        except Exception as e:
-            print(f"Google error: {e}")
+            logger.error(f"Google Alerts error: {e}")
         return leads
 
     def process_lead(self, raw_lead):
@@ -238,11 +231,10 @@ class RealEstateScraper:
     def run_all(self):
         all_raw = []
         all_raw.extend(self.scrape_reddit())
-        all_raw.extend(self.scrape_craigslist())
-        all_raw.extend(self.scrape_google_search())
         all_raw.extend(self.scrape_google_alerts())
+        all_raw.extend(self._scrape_playwright_sources())
 
-        print(f"[+] Total raw leads found: {len(all_raw)}")
+        logger.info(f"Total raw leads found: {len(all_raw)}")
         processed = []
         for raw in all_raw:
             processed.append(self.process_lead(raw))

@@ -24,9 +24,9 @@ This system automatically scrapes, classifies, and scores real estate leads from
 
 3. Run the system (FastAPI):
    ```bash
-   python3 main.py
+   python3 main.py > server.log 2>&1 &
    ```
-   Visit `http://localhost:8000`
+   Visit `http://localhost:8000`. Using `> server.log` enables the Live Log viewer in the dashboard.
 
 ## Deployment to Streamlit.io
 
