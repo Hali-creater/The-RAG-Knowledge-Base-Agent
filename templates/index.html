@@ -19,6 +19,8 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-black tracking-tight">🔎 LEAD INTELLIGENCE ENGINE</h1>
             <div class="flex items-center space-x-6">
+                <span id="sync-status" class="hidden text-xs bg-amber-500 px-3 py-1 rounded-full animate-pulse">Syncing...</span>
+                <button onclick="triggerSync()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-bold transition">🔄 Sync Now</button>
                 <span class="bg-indigo-700 px-4 py-1 rounded-full text-sm font-bold">Today: {{ summary.total }} Leads</span>
                 <a href="/export_csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold transition">📥 Export CSV</a>
             </div>
@@ -71,6 +73,17 @@
                     <a href="/" class="w-full block text-center text-gray-500 text-sm font-bold py-2">Reset</a>
                 </div>
             </form>
+        </div>
+
+        <!-- Scraper Logs -->
+        <div class="bg-gray-900 text-green-400 p-4 rounded-xl shadow-inner mb-8 font-mono text-xs h-40 overflow-y-auto" id="log-box">
+            <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
+                <span class="font-bold text-gray-500 uppercase">Live Scraper Logs</span>
+                <button onclick="refreshLogs()" class="text-indigo-400 hover:text-indigo-300">↻ Refresh</button>
+            </div>
+            <div id="log-content">
+                Loading logs...
+            </div>
         </div>
 
         <!-- Leads Table -->
@@ -156,6 +169,36 @@
                 await fetch(`/delete_lead/${id}`, { method: 'DELETE' });
                 location.reload();
             }
+        }
+
+        async function refreshLogs() {
+            const res = await fetch('/logs');
+            const data = await res.json();
+            const content = document.getElementById('log-content');
+            content.innerHTML = data.logs.join('<br>');
+            const box = document.getElementById('log-box');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // Auto-refresh logs every 10 seconds
+        setInterval(refreshLogs, 10000);
+        refreshLogs();
+
+        async function triggerSync() {
+            const btn = event.currentTarget;
+            const status = document.getElementById('sync-status');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            status.classList.remove('hidden');
+
+            await fetch('/sync', { method: 'POST' });
+
+            alert("Sync started! It will take a few minutes. Please refresh the page later.");
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                status.classList.add('hidden');
+            }, 5000);
         }
     </script>
 </body>

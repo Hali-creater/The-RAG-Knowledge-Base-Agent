@@ -4,7 +4,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 import os
-from database import get_all_leads, update_lead, delete_lead, get_daily_summary, export_to_csv
+from database import get_all_leads, update_lead, delete_lead, get_daily_summary, export_to_csv, save_lead
+from scraper import RealEstateScraper
+import threading
 
 app = FastAPI(title="Real Estate Lead Intelligence Dashboard")
 
@@ -54,6 +56,28 @@ async def modify_lead(lead_id: int, update: LeadUpdate):
 async def remove_lead(lead_id: int):
     delete_lead(lead_id)
     return {"status": "success"}
+
+def run_sync_in_background():
+    scraper = RealEstateScraper()
+    leads = scraper.run_all()
+    for lead in leads:
+        save_lead(lead)
+
+@app.post("/sync")
+async def sync_leads():
+    # Run in background to avoid timeout
+    thread = threading.Thread(target=run_sync_in_background)
+    thread.start()
+    return {"status": "Sync started in background"}
+
+@app.get("/logs")
+async def get_logs():
+    log_file = "server.log"
+    if os.path.exists(log_file):
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+            return {"logs": lines[-50:]} # Return last 50 lines
+    return {"logs": ["No logs found. Start the app with output redirected to server.log"]}
 
 @app.get("/export_csv")
 async def export_csv(
