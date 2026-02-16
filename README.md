@@ -66,6 +66,33 @@ To use Reddit scraping:
 4. Generate an **App Password** in your Google Account security settings.
 5. Add `IMAP_USER` and `IMAP_PASSWORD` to your `.env` file or Streamlit secrets.
 
+## 🛠 Troubleshooting & Pro Tips
+
+If you are not getting results, follow these steps:
+
+1. **Run Diagnostics**:
+   ```bash
+   python3 setup_diagnostic.py
+   ```
+   This script checks if your API keys and dependencies are correctly configured.
+
+2. **Seed Sample Data**:
+   If you want to see how the dashboard looks immediately:
+   ```bash
+   python3 seed_data.py
+   ```
+
+3. **Check API Keys**:
+   - **Reddit**: Ensure your App is a "script" type.
+   - **Gmail**: You **MUST** use an "App Password," not your regular login password.
+
+4. **Expand Your Search**:
+   - Edit `scraper.py` to add more cities to the `scrape_craigslist` URLs.
+   - Adjust `queries` in `scrape_google_search` for your specific region.
+
+5. **Headless Browser**:
+   If running on a desktop and Google Search fails, try setting `headless=False` in `scraper.py` to see if you are being blocked by a CAPTCHA.
+
 - `streamlit_app.py`: Main dashboard for Streamlit deployment.
 - `main.py`: Entry point for local FastAPI deployment.
 - `scraper.py`: Logic for finding leads.

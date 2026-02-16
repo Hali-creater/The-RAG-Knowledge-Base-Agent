@@ -34,12 +34,21 @@ class RealEstateScraper:
                 client_secret=client_secret,
                 user_agent=user_agent
             )
-            subreddits = ['realestate', 'HomeBuying', 'property', 'investing']
-            keywords = ['selling', 'buying', 'for sale', 'looking to buy', 'owner selling', 'searching for property']
+            subreddits = [
+                'realestate', 'HomeBuying', 'property', 'investing',
+                'RealEstateTechnology', 'realtors', 'HouseHunting',
+                'FirstTimeHomeBuyer', 'commercialrealestate'
+            ]
+            keywords = [
+                'selling', 'buying', 'for sale', 'looking to buy',
+                'owner selling', 'searching for property', 'fsbo',
+                'investment property', 'motivated seller', 'urgent sale'
+            ]
 
             for sub_name in subreddits:
+                print(f"[*] Checking r/{sub_name}...")
                 subreddit = reddit.subreddit(sub_name)
-                for submission in subreddit.new(limit=10):
+                for submission in subreddit.new(limit=25):
                     text = (submission.title + " " + submission.selftext).lower()
                     if any(kw in text for kw in keywords):
                         leads.append({
@@ -62,6 +71,7 @@ class RealEstateScraper:
         leads = []
         for url in urls:
             try:
+                print(f"[*] Checking Craigslist RSS: {url}")
                 response = requests.get(url, headers=self.headers)
                 soup = BeautifulSoup(response.content, 'xml')
                 items = soup.find_all('item')
@@ -87,6 +97,7 @@ class RealEstateScraper:
 
         leads = []
         try:
+            print("[*] Checking Google Alerts via IMAP...")
             mail = imaplib.IMAP4_SSL(imap_server)
             mail.login(imap_user, imap_password)
             mail.select("inbox")
@@ -139,9 +150,14 @@ class RealEstateScraper:
 
     def scrape_google_search(self):
         """Basic Google Search result monitoring via Playwright."""
-        queries = ["'must sell' house", "'urgent sale' real estate", "looking to buy property NYC"]
+        queries = [
+            "'must sell' house", "'urgent sale' real estate",
+            "looking to buy property", "motivated seller real estate",
+            "cash buyer property", "need to sell my home fast"
+        ]
         leads = []
         try:
+            print("[*] Starting Google Search monitoring...")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page()
@@ -195,6 +211,7 @@ class RealEstateScraper:
         all_raw.extend(self.scrape_google_search())
         all_raw.extend(self.scrape_google_alerts())
 
+        print(f"[+] Total raw leads found: {len(all_raw)}")
         processed = []
         for raw in all_raw:
             processed.append(self.process_lead(raw))
