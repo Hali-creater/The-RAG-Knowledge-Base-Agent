@@ -8,6 +8,7 @@ This system automatically scrapes, classifies, and scores real estate leads from
 - **Lead Scoring**: Prioritizes leads based on urgency and relevance.
 - **Dashboard**: Professional web UI to manage leads.
 - **Manual Organization**: Add internal notes and manage lead status.
+- **Google Alerts Integration**: Automatically parses real estate alerts from your Gmail.
 
 ## Local Setup
 
@@ -57,6 +58,13 @@ To use Reddit scraping:
 2. Create a "script" type app.
 3. Note the Client ID (under the app name) and the Secret.
 4. Add these to your `.env` file or Streamlit secrets.
+
+## Google Alerts Setup
+1. Create real estate alerts at [Google Alerts](https://www.google.com/alerts).
+2. Set "Deliver to" to your Gmail address.
+3. Enable IMAP in your Gmail settings.
+4. Generate an **App Password** in your Google Account security settings.
+5. Add `IMAP_USER` and `IMAP_PASSWORD` to your `.env` file or Streamlit secrets.
 
 - `streamlit_app.py`: Main dashboard for Streamlit deployment.
 - `main.py`: Entry point for local FastAPI deployment.
