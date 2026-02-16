@@ -1,0 +1,15 @@
+langchain
+langchain-openai
+langchain-community
+langchain-chroma
+langchain-text-splitters
+chromadb
+pypdf
+docx2txt
+unstructured
+python-dotenv
+pandas
+fastapi
+uvicorn
+jinja2
+python-multipart

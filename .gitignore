@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+data/chroma_db/
+uploads/
+data/documents/
+server.log
+.DS_Store
