@@ -33,14 +33,15 @@ async def upload_files(files: List[UploadFile] = File(...)):
     count = 0
     for file in files:
         if allowed_file(file.filename):
-            file_path = os.path.join("uploads", file.filename)
+            safe_filename = os.path.basename(file.filename)
+            file_path = os.path.join("uploads", safe_filename)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
             # Ingest to RAG Agent
             agent.ingest_document(file_path)
             # Move to data/documents for persistence
-            shutil.move(file_path, os.path.join("data/documents", file.filename))
+            shutil.move(file_path, os.path.join("data/documents", safe_filename))
             count += 1
 
     return {"count": count}
