@@ -21,8 +21,27 @@ class RAGAgent:
         self.text_splitter = TextSplitter()
 
     def ingest_document(self, file_path: str):
+        # UPDATING DOCUMENTS PROTOCOL:
+        # 1. Find all existing chunks from this document
+        # 2. Delete them from vector database
+        source_name = file_path # In main.py we pass the path
+        # But VectorStore uses the 'source' metadata which is usually the file path
+        # We should use the base filename as source identifier for consistency
+        base_name = os.path.basename(file_path)
+
+        # Note: LangChain loaders often set 'source' to the full path.
+        # We'll handle both or ensure consistent metadata.
+
         docs = DocumentLoader.load_document(file_path)
+        for doc in docs:
+            doc.metadata["source"] = base_name # Ensure consistent source name
+
         chunks = self.text_splitter.split_documents(docs)
+
+        # 2. Delete existing
+        self.vector_store.delete_document_chunks(base_name)
+
+        # 3. Process as new
         self.vector_store.add_documents(chunks)
         return len(chunks)
 
@@ -65,7 +84,7 @@ class RAGAgent:
             "2. If the answer is NOT in the context, say: 'I cannot find this information in the available documents.'\n"
             "3. NEVER make up or hallucinate information\n"
             "4. NEVER use your training data—only the retrieved context\n"
-            "5. When quoting, cite the source document name if available\n\n"
+            "5. Every factual statement should cite its source document. Format: [Source: filename.pdf]\n\n"
             f"Conversation History:\n{history_text}\n"
             f"Context:\n{context_text}"
         )
@@ -78,11 +97,18 @@ class RAGAgent:
         response = self.llm.invoke(messages)
         answer = response.content
 
+        # CHECK 3 - Confidence Scoring
+        confidence = "high" if len(results) >= 3 else "medium"
+        # If confidence is low, add disclaimer
+        if len(results) < 2:
+            confidence = "low"
+            answer += "\n\n(Disclaimer: This information may be incomplete)"
+
         # STEP 5 - Maintain Conversation
         self.memory_manager.add_exchange(question, answer)
 
         return {
             "answer": answer,
             "sources": sources,
-            "confidence": "high" if len(results) > 1 else "medium"
+            "confidence": confidence
         }
