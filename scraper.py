@@ -184,7 +184,7 @@ class RealEstateScraper:
             "lead_type": lead_type,
             "intent_score": score,
             "intent_level": level,
-            "content_hash": self.get_content_hash(raw_lead['description']),
+            "content_hash": get_content_hash(raw_lead['description']),
             "status": "New"
         }
 

@@ -1,6 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from database import save_lead, init_db
 from scraper import RealEstateScraper
+from notifier import send_lead_alert
 import logging
 
 # Configure logging
@@ -14,6 +15,10 @@ def run_scraper_job():
 
     for lead in leads:
         save_lead(lead)
+        # Email alert for high-priority leads (score > 80 or urgent keywords)
+        if lead.get('intent_score', 0) > 80:
+            send_lead_alert(lead)
+
     logger.info(f"Scheduled job completed. Found {len(leads)} potential leads.")
 
 def start_scheduler():

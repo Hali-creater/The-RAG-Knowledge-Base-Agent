@@ -149,14 +149,15 @@ def get_daily_summary():
 
 def export_to_csv(leads):
     output = StringIO()
+    # Using 'Date' instead of 'created_at' in the CSV header
     writer = csv.DictWriter(output, fieldnames=[
         "title", "source", "location", "lead_type", "phone", "email",
-        "intent_score", "intent_level", "url", "created_at", "status", "notes"
+        "intent_score", "intent_level", "url", "Date", "status", "notes"
     ], extrasaction='ignore')
     writer.writeheader()
     for lead in leads:
-        # Map created_at to Date for header consistency if needed
-        lead_copy = lead.copy()
+        # Map created_at to Date for header consistency
+        lead_copy = dict(lead)
         lead_copy["Date"] = lead_copy.get("created_at")
         writer.writerow(lead_copy)
     return output.getvalue()
