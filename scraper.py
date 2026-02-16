@@ -2,6 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 import praw
+import imaplib
+import email
+from email.header import decode_header
 import os
 import time
 from extractor import extract_entities
@@ -73,6 +76,67 @@ class RealEstateScraper:
                 print(f"Craigslist error: {e}")
         return leads
 
+    def scrape_google_alerts(self):
+        """Fetches Google Alerts from Gmail via IMAP."""
+        imap_server = os.getenv("IMAP_SERVER", "imap.gmail.com")
+        imap_user = os.getenv("IMAP_USER")
+        imap_password = os.getenv("IMAP_PASSWORD")
+
+        if not imap_user or not imap_password:
+            return []
+
+        leads = []
+        try:
+            mail = imaplib.IMAP4_SSL(imap_server)
+            mail.login(imap_user, imap_password)
+            mail.select("inbox")
+
+            # Search for emails from Google Alerts
+            status, messages = mail.search(None, '(FROM "googlealerts-noreply@google.com")')
+            if status != "OK":
+                return []
+
+            for num in messages[0].split()[-10:]: # Get last 10 alerts
+                status, data = mail.fetch(num, "(RFC822)")
+                if status != "OK":
+                    continue
+
+                for response_part in data:
+                    if isinstance(response_part, tuple):
+                        msg = email.message_from_bytes(response_part[1])
+                        body = ""
+                        if msg.is_multipart():
+                            for part in msg.walk():
+                                if part.get_content_type() == "text/html":
+                                    body = part.get_payload(decode=True).decode()
+                                    break
+                        else:
+                            body = msg.get_payload(decode=True).decode()
+
+                        if body:
+                            soup = BeautifulSoup(body, 'html.parser')
+                            # Google Alerts HTML structure usually has links in <a> tags
+                            # with titles in them.
+                            for link in soup.find_all('a'):
+                                title = link.get_text().strip()
+                                url = link.get('href')
+                                # Filter for actual alerts (often have 'url?' in href)
+                                if url and "google.com/url?" in url and len(title) > 20:
+                                    # Extract the real URL from Google's redirect
+                                    import urllib.parse
+                                    parsed_url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('url', [url])[0]
+
+                                    leads.append({
+                                        "title": title,
+                                        "description": "Lead detected via Google Alerts.",
+                                        "url": parsed_url,
+                                        "source": "Alert"
+                                    })
+            mail.logout()
+        except Exception as e:
+            print(f"Google Alerts error: {e}")
+        return leads
+
     def scrape_google_search(self):
         """Basic Google Search result monitoring via Playwright."""
         queries = ["'must sell' house", "'urgent sale' real estate", "looking to buy property NYC"]
@@ -129,6 +193,7 @@ class RealEstateScraper:
         all_raw.extend(self.scrape_reddit())
         all_raw.extend(self.scrape_craigslist())
         all_raw.extend(self.scrape_google_search())
+        all_raw.extend(self.scrape_google_alerts())
 
         processed = []
         for raw in all_raw:
