@@ -16,13 +16,18 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f1f5f9;
+            background-color: #ffffff;
+            color: #0f172a;
+            font-weight: 700; /* BOLD globally as requested */
         }
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .white-writing {
+            color: #ffffff !important;
+            font-weight: 800 !important;
         }
         .chat-container::-webkit-scrollbar {
             width: 6px;
@@ -49,9 +54,10 @@
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
         }
         .agent-bubble {
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            color: #0f172a;
         }
         .sidebar-item:hover {
             background: rgba(255, 255, 255, 0.05);
@@ -61,7 +67,7 @@
 <body class="h-screen overflow-hidden flex flex-col md:flex-row">
 
     <!-- Sidebar -->
-    <aside class="w-full md:w-80 glass-panel border-r border-slate-800 flex flex-col z-20">
+    <aside class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col z-20">
         <div class="p-6 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -78,17 +84,17 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-8">
             <!-- Upload Section -->
             <div>
-                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">Knowledge Core</h2>
-                <div class="glass-panel rounded-2xl p-4 border-dashed border-2 border-slate-700 hover:border-blue-500 transition-colors cursor-pointer group relative">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">Knowledge Core</h2>
+                <div class="bg-slate-800 rounded-2xl p-4 border-dashed border-2 border-slate-700 hover:border-blue-500 transition-colors cursor-pointer group relative">
                     <form id="uploadForm">
                         <input type="file" id="fileInput" class="absolute inset-0 opacity-0 cursor-pointer" multiple>
                         <div class="text-center py-4">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-slate-500 group-hover:text-blue-400 transition-colors mb-2"></i>
-                            <p class="text-sm font-medium text-slate-300">Drop files or click</p>
-                            <p class="text-xs text-slate-500 mt-1">PDF, DOCX, TXT, MD</p>
+                            <i class="fas fa-cloud-upload-alt text-3xl text-blue-400 group-hover:text-blue-300 transition-colors mb-2"></i>
+                            <p class="text-sm font-bold text-white">Drop files or click</p>
+                            <p class="text-xs text-slate-400 mt-1 font-bold">PDF, DOCX, TXT, MD</p>
                         </div>
-                        <button type="submit" class="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center">
-                            <i class="fas fa-plus mr-2 text-xs"></i> Ingest Data
+                        <button type="submit" class="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center">
+                            <i class="fas fa-plus mr-2 text-xs"></i> INGEST DATA
                         </button>
                     </form>
                 </div>
@@ -105,30 +111,30 @@
         </div>
 
         <div class="p-4 border-t border-slate-800 space-y-2">
-            <button id="clearHistory" class="w-full py-2.5 px-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-medium transition-all flex items-center justify-center">
-                <i class="fas fa-trash-alt mr-2 text-xs"></i> Clear Conversation
+            <button id="clearHistory" class="w-full py-2.5 px-4 text-white hover:bg-slate-800 rounded-xl text-sm font-bold transition-all flex items-center justify-center bg-slate-800">
+                <i class="fas fa-trash-alt mr-2 text-xs"></i> CLEAR CONVERSATION
             </button>
 
             <!-- Bootstrap styled button to show integration -->
-            <button type="button" class="w-full py-2 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-blue-400 border border-slate-800 hover:border-blue-500/30 transition-all flex items-center justify-center bg-slate-900/50" data-bs-toggle="modal" data-bs-target="#infoModal">
-                <i class="fas fa-info-circle mr-2"></i> System Details
+            <button type="button" class="w-full py-2 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white border border-slate-700 hover:border-blue-500/50 transition-all flex items-center justify-center bg-slate-800" data-bs-toggle="modal" data-bs-target="#infoModal">
+                <i class="fas fa-info-circle mr-2"></i> SYSTEM DETAILS
             </button>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col relative bg-[#0f172a]">
+    <main class="flex-1 flex flex-col relative bg-white">
         <!-- Top Navigation -->
-        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-[#0f172a]/80 backdrop-blur-md z-10">
+        <header class="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md z-10">
             <div class="flex items-center space-x-2">
-                <h2 class="text-sm font-semibold text-slate-300">Intelligent Assistant</h2>
-                <span class="text-slate-600 text-sm px-2">/</span>
-                <span class="text-sm text-slate-500">Live Context</span>
+                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-tighter">Intelligent Assistant</h2>
+                <span class="text-slate-900 text-sm px-2 font-black">/</span>
+                <span class="text-sm text-blue-600 font-black uppercase tracking-tighter">Live Context</span>
             </div>
             <div class="flex items-center space-x-4">
                 <div class="flex -space-x-2">
-                    <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">PDF</div>
-                    <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">TXT</div>
+                    <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-900 text-white flex items-center justify-center text-[10px] font-black">PDF</div>
+                    <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-900 text-white flex items-center justify-center text-[10px] font-black">TXT</div>
                 </div>
             </div>
         </header>
@@ -140,8 +146,8 @@
                 <div class="w-16 h-16 rounded-3xl bg-blue-600/10 flex items-center justify-center mb-4">
                     <i class="fas fa-brain text-4xl text-blue-500"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-white">Advanced RAG Interface</h3>
-                <p class="text-slate-400 max-w-md">Upload your proprietary documents to enable localized knowledge retrieval and precise AI analysis.</p>
+                <h3 class="text-2xl font-bold text-slate-900">Advanced RAG Interface</h3>
+                <p class="text-slate-600 max-w-md font-bold">Upload your proprietary documents to enable localized knowledge retrieval and precise AI analysis.</p>
                 <div class="grid grid-cols-2 gap-3 mt-8">
                     <div class="glass-panel p-4 rounded-2xl text-left hover:bg-slate-800 transition-colors cursor-pointer border-slate-800">
                         <i class="fas fa-file-pdf text-red-400 mb-2"></i>
@@ -160,7 +166,7 @@
             <form id="chatForm" class="relative max-w-4xl mx-auto">
                 <div class="relative group">
                     <input type="text" id="userInput"
-                        class="w-full bg-[#1e293b] border border-slate-700 text-white pl-6 pr-16 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-500 shadow-2xl"
+                        class="w-full bg-white border border-slate-300 text-slate-900 font-bold pl-6 pr-16 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-400 shadow-xl"
                         placeholder="Ask a question about your knowledge core..."
                         required>
                     <button type="submit"
@@ -227,10 +233,10 @@
             wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
 
             const content = document.createElement('div');
-            content.className = `max-w-[85%] md:max-w-[70%] p-4 md:p-5 rounded-2xl ${role === 'user' ? 'user-bubble text-white' : 'agent-bubble text-slate-200'}`;
+            content.className = `max-w-[85%] md:max-w-[70%] p-4 md:p-5 rounded-2xl ${role === 'user' ? 'user-bubble text-white font-bold' : 'agent-bubble text-slate-900 font-bold'}`;
 
             const textSpan = document.createElement('div');
-            textSpan.className = 'text-sm md:text-base leading-relaxed';
+            textSpan.className = 'text-sm md:text-base leading-relaxed font-bold';
             textSpan.style.whiteSpace = 'pre-wrap';
             textSpan.textContent = text;
             content.appendChild(textSpan);
@@ -328,8 +334,8 @@
                     item.innerHTML = `
                         <i class="far fa-file-alt ${iconColor} mr-3 text-lg"></i>
                         <div class="flex-1 overflow-hidden">
-                            <p class="text-sm font-medium text-slate-300 truncate">${doc}</p>
-                            <p class="text-[10px] text-slate-500 uppercase font-bold">${ext} Storage</p>
+                            <p class="text-sm font-bold text-white truncate">${doc}</p>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold">${ext} Storage</p>
                         </div>
                     `;
                     documentList.appendChild(item);
