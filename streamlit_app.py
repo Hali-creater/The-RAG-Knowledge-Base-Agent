@@ -17,8 +17,14 @@ st.markdown("""
     <style>
     /* Main Background */
     .stApp {
-        background-color: #0f172a;
-        color: #f1f5f9;
+        background-color: #ffffff;
+        color: #0f172a;
+        font-weight: 700 !important;
+    }
+
+    /* Global bold for all text */
+    * {
+        font-weight: 700 !important;
     }
 
     /* Hide Streamlit Header/Footer */
@@ -28,24 +34,29 @@ st.markdown("""
 
     /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: #1e293b !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: #0f172a !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3 {
-        color: #f1f5f9 !important;
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] div {
+        color: #ffffff !important;
+        font-weight: 800 !important;
     }
 
     /* Custom Chat Container */
     .stChatMessage {
-        background-color: #1e293b !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background-color: #f8fafc !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
         border-radius: 1.5rem !important;
         padding: 1.5rem !important;
         margin-bottom: 1rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+        color: #0f172a !important;
     }
 
     /* User message specific style */
@@ -54,30 +65,42 @@ st.markdown("""
         border: none !important;
     }
 
-    div[data-testid="stChatMessageUser"] p {
+    div[data-testid="stChatMessageUser"] p,
+    div[data-testid="stChatMessageUser"] span,
+    div[data-testid="stChatMessageUser"] div {
         color: white !important;
+        font-weight: 800 !important;
     }
 
     /* Input Field */
     div[data-testid="stChatInput"] {
-        background-color: #1e293b !important;
+        background-color: #f8fafc !important;
         border-radius: 1rem !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 2px solid #3b82f6 !important;
+    }
+
+    /* Input Text */
+    div[data-testid="stChatInput"] textarea {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
     }
 
     /* Headings */
     h1 {
         font-weight: 800 !important;
         letter-spacing: -0.025em !important;
-        color: #ffffff !important;
+        color: #0f172a !important;
     }
 
     /* Sidebar components */
     .stButton button {
         border-radius: 0.75rem !important;
-        font-weight: 600 !important;
-        text-transform: none !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
         transition: all 0.2s ease !important;
+        background-color: #3b82f6 !important;
+        color: white !important;
     }
 
     .stButton button:hover {
@@ -87,11 +110,13 @@ st.markdown("""
 
     /* Document list items */
     .doc-item {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.1);
         padding: 0.75rem;
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
-        border-left: 3px solid #3b82f6;
+        border-left: 4px solid #3b82f6;
+        color: white !important;
+        font-weight: 800 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -170,7 +195,7 @@ with st.sidebar:
 
 # Main Interface
 st.title("Intelligent Knowledge Assistant")
-st.markdown("<p style='color: #94a3b8; font-size: 18px;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #0f172a; font-size: 18px; font-weight: 800;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
 
 # API Key check
 if st.session_state.agent is None:
