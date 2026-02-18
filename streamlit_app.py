@@ -34,7 +34,7 @@ st.markdown("""
 
     /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: #0f172a !important;
+        background-color: #ffffff !important;
         border-right: 1px solid rgba(0, 0, 0, 0.1);
     }
 
@@ -44,7 +44,7 @@ st.markdown("""
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] span,
     section[data-testid="stSidebar"] div {
-        color: #ffffff !important;
+        color: #0f172a !important;
         font-weight: 800 !important;
     }
 
@@ -110,12 +110,13 @@ st.markdown("""
 
     /* Document list items */
     .doc-item {
-        background: rgba(255, 255, 255, 0.1);
+        background: #f8fafc;
         padding: 0.75rem;
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
         border-left: 4px solid #3b82f6;
-        color: white !important;
+        color: #0f172a !important;
         font-weight: 800 !important;
     }
     </style>
