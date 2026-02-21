@@ -205,16 +205,45 @@ if st.session_state.agent is None:
         api_key_input = st.text_input("Enter OpenAI API Key", type="password")
         if api_key_input:
             os.environ["OPENAI_API_KEY"] = api_key_input
-            st.session_state.agent = RAGAgent()
+            try:
+                st.session_state.agent = RAGAgent()
+                st.success("Agent initialized successfully!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to initialize agent: {str(e)}")
+
+# Display example questions if no messages
+if not st.session_state.messages and st.session_state.agent:
+    st.markdown("### 💡 Suggested Questions")
+    cols = st.columns(2)
+    examples = [
+        "What are the key findings in the uploaded documents?",
+        "Can you summarize the main points of the latest file?",
+        "Are there any specific dates or deadlines mentioned?",
+        "What is the overall tone of these documents?"
+    ]
+    for i, example in enumerate(examples):
+        if cols[i % 2].button(example, use_container_width=True):
+            # We'll handle this in the chat input logic by setting a temporary session state
+            st.session_state.temp_prompt = example
             st.rerun()
 
 # Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        if message.get("sources"):
+            with st.expander("📚 Sources"):
+                for source in message["sources"]:
+                    st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
 
 # Chat input
-if prompt := st.chat_input("Ask a question about your knowledge core..."):
+prompt = st.chat_input("Ask a question about your knowledge core...")
+if "temp_prompt" in st.session_state:
+    prompt = st.session_state.temp_prompt
+    del st.session_state.temp_prompt
+
+if prompt:
     if st.session_state.agent:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -222,10 +251,18 @@ if prompt := st.chat_input("Ask a question about your knowledge core..."):
 
         with st.chat_message("assistant"):
             with st.spinner("Retrieving and generating..."):
-                response_data = st.session_state.agent.answer_question(prompt)
-                full_response = response_data["answer"]
-                st.markdown(full_response)
+                try:
+                    response_data = st.session_state.agent.answer_question(prompt)
+                    full_response = response_data["answer"]
+                    st.markdown(full_response)
 
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+                    if response_data.get("sources"):
+                        with st.expander("📚 Sources"):
+                            for source in response_data["sources"]:
+                                st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
+
+                    st.session_state.messages.append({"role": "assistant", "content": full_response, "sources": response_data.get("sources")})
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
     else:
         st.error("Agent not initialized.")
