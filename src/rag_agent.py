@@ -12,22 +12,29 @@ load_dotenv()
 
 class RAGAgent:
     def __init__(self, model_name: str = "gpt-4o"):
-        self.vector_store = VectorStore()
+        self.model_name = model_name
         self.memory_manager = MemoryManager()
-
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            try:
-                import streamlit as st
-                api_key = st.secrets.get("OPENAI_API_KEY")
-            except Exception:
-                pass
-
-        self.llm = ChatOpenAI(
-            model=model_name,
-            openai_api_key=api_key
-        )
         self.text_splitter = TextSplitter()
+        self._llm = None
+        self._vector_store = None
+
+    @property
+    def llm(self):
+        if self._llm is None:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY not found. Please set it in your environment or .env file.")
+            self._llm = ChatOpenAI(
+                model=self.model_name,
+                openai_api_key=api_key
+            )
+        return self._llm
+
+    @property
+    def vector_store(self):
+        if self._vector_store is None:
+            self._vector_store = VectorStore()
+        return self._vector_store
 
     def ingest_document(self, file_path: str):
         # UPDATING DOCUMENTS PROTOCOL:
@@ -55,23 +62,33 @@ class RAGAgent:
         return len(chunks)
 
     def answer_question(self, question: str) -> Dict:
-        # STEP 1 - Analyze Question (is it a follow-up?)
-        is_follow_up = self.memory_manager.is_follow_up(question)
-
-        # STEP 2 - Retrieve Context
-        # If follow-up, we might want to augment the query with history
+        # STEP 1 - Analyze Question and generate standalone query
         search_query = question
-        if is_follow_up and self.memory_manager.history:
-            last_exchange = self.memory_manager.history[-1]
-            search_query = f"{last_exchange['question']} {last_exchange['answer']} {question}"
+        if self.memory_manager.history:
+            history_text = self.memory_manager.get_formatted_history()
+            reformulation_messages = [
+                SystemMessage(content="Given a conversation history and a follow-up question, rephrase the follow-up question to be a standalone question that can be understood without the history. If it's already a standalone question, return it as is. Respond ONLY with the rephrased question."),
+                HumanMessage(content=f"History:\n{history_text}\n\nFollow-up Question: {question}")
+            ]
+            try:
+                search_query = self.llm.invoke(reformulation_messages).content.strip()
+            except Exception:
+                # Fallback to simple concatenation if LLM fails
+                last_exchange = self.memory_manager.history[-1]
+                search_query = f"{last_exchange['question']} {question}"
 
-        results = self.vector_store.similarity_search(search_query, k=5, score_threshold=0.7)
+        # STEP 2 - Retrieve Context with Fallback Threshold
+        results = self.vector_store.similarity_search(search_query, k=5, score_threshold=0.4)
+
+        # Fallback if no results with 0.4
+        if not results:
+            results = self.vector_store.similarity_search(search_query, k=3, score_threshold=0.2)
 
         if not results:
             return {
-                "answer": "I don't have information about that in my knowledge base",
+                "answer": "I cannot find specific information about that in my current knowledge base. Could you please provide more details or upload relevant documents?",
                 "sources": [],
-                "confidence": "low"
+                "confidence": "none"
             }
 
         context_text = ""

@@ -28,9 +28,13 @@ class MemoryManager:
         self.history = []
 
     def is_follow_up(self, question: str) -> bool:
+        """
+        Check if the question is likely a follow-up.
+        Deprecated: Using LLM-based reformulation instead.
+        """
         if not self.history:
             return False
 
-        follow_up_indicators = ["it", "that", "this", "the other one", "what you just said", "tell me more"]
+        follow_up_indicators = ["it", "that", "this", "the other one", "what you just said", "tell me more", "why?", "how?"]
         question_lower = question.lower()
         return any(indicator in question_lower for indicator in follow_up_indicators)
