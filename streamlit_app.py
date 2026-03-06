@@ -127,18 +127,8 @@ ensure_dirs()
 
 # Initialize session state for RAG Agent
 if "agent" not in st.session_state:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        try:
-            api_key = st.secrets.get("OPENAI_API_KEY")
-        except Exception:
-            api_key = None
-
-    if api_key:
-        os.environ["OPENAI_API_KEY"] = api_key
-        st.session_state.agent = RAGAgent()
-    else:
-        st.session_state.agent = None
+    # Local LLM doesn't need API key
+    st.session_state.agent = RAGAgent()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -178,21 +168,19 @@ with st.sidebar:
                             shutil.move(file_path, os.path.join("data/documents", safe_filename))
                             success_count += 1
                         except Exception as e:
-                            error_msg = str(e)
-                            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                                st.error(f"❌ **Quota Exceeded:** Your OpenAI API key has no remaining credits. Please check your billing details at [OpenAI Dashboard](https://platform.openai.com/account/billing).")
-                            else:
-                                st.error(f"❌ Error processing `{uploaded_file.name}`: {error_msg}")
+                            st.error(f"❌ Error processing `{uploaded_file.name}`: {str(e)}")
 
                     if success_count > 0:
                         st.success(f"Successfully ingested {success_count} sources!")
             else:
-                st.error("API Key required.")
+                st.error("Agent not initialized.")
 
     st.markdown("---")
     st.subheader("📚 Loaded Sources")
     if st.session_state.agent:
-        docs = st.session_state.agent.vector_store.get_all_sources()
+        # Note: onprem lib may not have a direct way to get all sources easily
+        # but we can check the documents directory
+        docs = os.listdir("data/documents") if os.path.exists("data/documents") else []
         if docs:
             for doc in docs:
                 st.markdown(f"<div class='doc-item'>{doc}</div>", unsafe_allow_html=True)
@@ -209,19 +197,8 @@ with st.sidebar:
 st.title("Intelligent Knowledge Assistant")
 st.markdown("<p style='color: #0f172a; font-size: 18px; font-weight: 800;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
 
-# API Key check
-if st.session_state.agent is None:
-    with st.container():
-        st.info("💡 **Welcome!** To get started, please provide an OpenAI API Key.")
-        api_key_input = st.text_input("Enter OpenAI API Key", type="password")
-        if api_key_input:
-            os.environ["OPENAI_API_KEY"] = api_key_input
-            try:
-                st.session_state.agent = RAGAgent()
-                st.success("Agent initialized successfully!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Failed to initialize agent: {str(e)}")
+# Local LLM Info
+st.info("💡 **Local Operation:** This agent runs 100% locally using Ollama/Llama3.2. No data leaves your machine.")
 
 # Display example questions if no messages
 if not st.session_state.messages and st.session_state.agent:
@@ -261,7 +238,7 @@ if prompt:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Retrieving and generating..."):
+            with st.spinner("Thinking locally..."):
                 try:
                     response_data = st.session_state.agent.answer_question(prompt)
                     full_response = response_data["answer"]
@@ -274,10 +251,6 @@ if prompt:
 
                     st.session_state.messages.append({"role": "assistant", "content": full_response, "sources": response_data.get("sources")})
                 except Exception as e:
-                    error_msg = str(e)
-                    if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                        st.error("❌ **Quota Exceeded:** Your OpenAI API key has no remaining credits. Please check your billing details.")
-                    else:
-                        st.error(f"Error: {error_msg}")
+                    st.error(f"Error: {str(e)}")
     else:
         st.error("Agent not initialized.")

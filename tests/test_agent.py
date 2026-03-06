@@ -1,22 +1,26 @@
 import pytest
 from src.rag_agent import RAGAgent
 import os
+from unittest.mock import MagicMock
+import sys
+
+# Ensure onprem is mocked
+if 'onprem' not in sys.modules:
+    sys.modules['onprem'] = MagicMock()
 
 def test_agent_initialization():
-    # Mocking environment variables
-    os.environ["OPENAI_API_KEY"] = "sk-dummy"
     agent = RAGAgent()
     assert agent is not None
-    # Just check if it has the components
-    assert hasattr(agent, 'vector_store')
     assert hasattr(agent, 'memory_manager')
+    assert agent.model_name == "ollama/llama3.2"
 
-def test_text_processing():
-    from src.text_splitter import TextSplitter
-    from langchain_core.documents import Document
+def test_agent_answer_format():
+    agent = RAGAgent()
+    # Mock the LLM property
+    agent._llm = MagicMock()
+    agent._llm.ask.return_value = "Test Answer"
 
-    splitter = TextSplitter()
-    docs = [Document(page_content="This is a test document. It has some text.", metadata={"source": "test.txt"})]
-    chunks = splitter.split_documents(docs)
-    assert len(chunks) > 0
-    assert "test document" in chunks[0].page_content
+    response = agent.answer_question("Test Question")
+    assert "answer" in response
+    assert response["answer"] == "Test Answer"
+    assert "sources" in response
