@@ -46,10 +46,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
                 shutil.move(file_path, os.path.join("data/documents", safe_filename))
                 count += 1
             except Exception as e:
-                error_msg = str(e)
-                if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                    raise HTTPException(status_code=402, detail="OpenAI Quota Exceeded. Please check your billing.")
-                errors.append(f"Error processing {file.filename}: {error_msg}")
+                errors.append(f"Error processing {file.filename}: {str(e)}")
         else:
             errors.append(f"File type not allowed: {file.filename}")
 
@@ -64,14 +61,13 @@ async def ask_question(request: QuestionRequest):
         response = agent.answer_question(request.question)
         return response
     except Exception as e:
-        error_msg = str(e)
-        if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-            raise HTTPException(status_code=402, detail="OpenAI Quota Exceeded. Please check your billing.")
-        raise HTTPException(status_code=500, detail=error_msg)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/documents")
 async def get_documents():
-    return agent.vector_store.get_all_sources()
+    if os.path.exists("data/documents"):
+        return os.listdir("data/documents")
+    return []
 
 @app.post("/clear")
 async def clear_history():

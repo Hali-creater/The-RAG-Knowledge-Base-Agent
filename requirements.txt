@@ -1,7 +1,6 @@
+onprem
 langchain
-langchain-openai
 langchain-community
-langchain-chroma
 langchain-text-splitters
 chromadb
 pypdf
