@@ -1,4 +1,4 @@
-onprem
+onprem[chroma]
 langchain
 langchain-community
 langchain-text-splitters
