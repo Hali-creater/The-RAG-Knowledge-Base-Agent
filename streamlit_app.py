@@ -166,15 +166,26 @@ with st.sidebar:
         if st.button("✨ Process Knowledge", use_container_width=True, type="primary"):
             if st.session_state.agent:
                 with st.spinner("Analyzing and chunking..."):
+                    success_count = 0
                     for uploaded_file in uploaded_files:
-                        safe_filename = os.path.basename(uploaded_file.name)
-                        file_path = os.path.join("uploads", safe_filename)
-                        with open(file_path, "wb") as f:
-                            f.write(uploaded_file.getbuffer())
+                        try:
+                            safe_filename = os.path.basename(uploaded_file.name)
+                            file_path = os.path.join("uploads", safe_filename)
+                            with open(file_path, "wb") as f:
+                                f.write(uploaded_file.getbuffer())
 
-                        st.session_state.agent.ingest_document(file_path)
-                        shutil.move(file_path, os.path.join("data/documents", safe_filename))
-                    st.success(f"Successfully ingested {len(uploaded_files)} sources!")
+                            st.session_state.agent.ingest_document(file_path)
+                            shutil.move(file_path, os.path.join("data/documents", safe_filename))
+                            success_count += 1
+                        except Exception as e:
+                            error_msg = str(e)
+                            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
+                                st.error(f"❌ **Quota Exceeded:** Your OpenAI API key has no remaining credits. Please check your billing details at [OpenAI Dashboard](https://platform.openai.com/account/billing).")
+                            else:
+                                st.error(f"❌ Error processing `{uploaded_file.name}`: {error_msg}")
+
+                    if success_count > 0:
+                        st.success(f"Successfully ingested {success_count} sources!")
             else:
                 st.error("API Key required.")
 
@@ -263,6 +274,10 @@ if prompt:
 
                     st.session_state.messages.append({"role": "assistant", "content": full_response, "sources": response_data.get("sources")})
                 except Exception as e:
-                    st.error(f"Error: {str(e)}")
+                    error_msg = str(e)
+                    if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
+                        st.error("❌ **Quota Exceeded:** Your OpenAI API key has no remaining credits. Please check your billing details.")
+                    else:
+                        st.error(f"Error: {error_msg}")
     else:
         st.error("Agent not initialized.")
