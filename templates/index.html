@@ -333,24 +333,37 @@
                 formData.append('files', files[i]);
             }
 
-            try {
-                const button = uploadForm.querySelector('button');
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-                button.disabled = true;
+            const button = uploadForm.querySelector('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            button.disabled = true;
 
+            try {
                 const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
+
+                if (response.status === 402) {
+                    alert('OpenAI Quota Exceeded. Please check your billing at platform.openai.com.');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    return;
+                }
+
                 const data = await response.json();
+
+                if (data.errors && data.errors.length > 0) {
+                    alert('Partial success. Errors occurred:\n' + data.errors.join('\n'));
+                }
 
                 button.innerHTML = originalText;
                 button.disabled = false;
-
                 loadDocuments();
             } catch (error) {
-                alert('Error uploading files.');
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('Error uploading files: ' + error.message);
             }
         });
 

@@ -31,20 +31,32 @@ async def read_item(request: Request):
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     count = 0
+    errors = []
     for file in files:
         if allowed_file(file.filename):
             safe_filename = os.path.basename(file.filename)
             file_path = os.path.join("uploads", safe_filename)
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+            try:
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
 
-            # Ingest to RAG Agent
-            agent.ingest_document(file_path)
-            # Move to data/documents for persistence
-            shutil.move(file_path, os.path.join("data/documents", safe_filename))
-            count += 1
+                # Ingest to RAG Agent
+                agent.ingest_document(file_path)
+                # Move to data/documents for persistence
+                shutil.move(file_path, os.path.join("data/documents", safe_filename))
+                count += 1
+            except Exception as e:
+                error_msg = str(e)
+                if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
+                    raise HTTPException(status_code=402, detail="OpenAI Quota Exceeded. Please check your billing.")
+                errors.append(f"Error processing {file.filename}: {error_msg}")
+        else:
+            errors.append(f"File type not allowed: {file.filename}")
 
-    return {"count": count}
+    if not errors:
+        return {"count": count}
+    else:
+        return JSONResponse(status_code=207, content={"count": count, "errors": errors})
 
 @app.post("/ask")
 async def ask_question(request: QuestionRequest):
@@ -52,7 +64,10 @@ async def ask_question(request: QuestionRequest):
         response = agent.answer_question(request.question)
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
+            raise HTTPException(status_code=402, detail="OpenAI Quota Exceeded. Please check your billing.")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/documents")
 async def get_documents():
