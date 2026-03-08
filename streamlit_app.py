@@ -220,6 +220,8 @@ if not st.session_state.messages and st.session_state.agent:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        if message.get("search_query"):
+            st.caption(f"🔍 **Standalone Search Query:** _{message['search_query']}_")
         if message.get("sources"):
             with st.expander("📚 Sources"):
                 for source in message["sources"]:
@@ -244,12 +246,20 @@ if prompt:
                     full_response = response_data["answer"]
                     st.markdown(full_response)
 
+                    if response_data.get("search_query"):
+                        st.caption(f"🔍 **Standalone Search Query:** _{response_data['search_query']}_")
+
                     if response_data.get("sources"):
                         with st.expander("📚 Sources"):
                             for source in response_data["sources"]:
                                 st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
 
-                    st.session_state.messages.append({"role": "assistant", "content": full_response, "sources": response_data.get("sources")})
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": full_response,
+                        "sources": response_data.get("sources"),
+                        "search_query": response_data.get("search_query")
+                    })
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
     else:

@@ -1,39 +1,73 @@
-# RAG Intelligence Agent
+# Private RAG Knowledge Base Agent 🤖
 
-A Retrieval-Augmented Generation (RAG) agent that answers questions based on your documents.
+A 100% local, privacy-first Retrieval-Augmented Generation (RAG) agent. No data leaves your machine, and no API keys are required.
 
-## Features
-- **Document Support**: PDF, DOCX, TXT, and Markdown.
-- **Stylish UI**: Modern interface using FastAPI, Tailwind CSS, and Bootstrap.
-- **Smart Retrieval**: Intelligent chunking and similarity search with ChromaDB.
-- **Conversation Memory**: Remembers context and handles follow-up questions.
-- **Security**: XSS protection and environment safety.
+## 🚀 Key Features
 
-## Setup
-1. Install dependencies:
+- **Local LLM Integration**: Powered by `onprem` and `Ollama` (defaulting to `llama3.2`).
+- **Advanced RAG Pipeline**:
+  - **Vector Database**: Semantic search using local ChromaDB.
+  - **Query Rewriting**: Automatically refines vague follow-up questions for better retrieval.
+  - **Chunking Control**: Configurable chunk size and overlap for precision.
+  - **Inline Citations**: Transparently shows which documents were used for the answer.
+- **Dual Interface**:
+  - **FastAPI Backend**: Professional API for integration.
+  - **Streamlit Frontend**: Intuitive, stylish chat interface.
+- **Support for Multiple Formats**: PDF, DOCX, TXT, MD, and more.
+
+## 🏗 Architecture
+
+```mermaid
+graph TD
+    User((User)) -->|Question| UI[Streamlit / FastAPI]
+    UI -->|Ingest| Agent[RAG Agent]
+    Agent -->|1. Rewrite| Rewriter[Query Rewriter]
+    Rewriter -->|Standalone Query| Search[Vector Search]
+    Search -->|Context Chunks| VDB[(ChromaDB)]
+    VDB -->|Retrieve| Agent
+    Agent -->|2. Generate| LLM[Local Llama 3.2]
+    LLM -->|Answer + Sources| UI
+    UI -->|Display| User
+```
+
+## 🛠 Installation
+
+1. **Install Ollama**:
+   Download and install from [ollama.com](https://ollama.com).
+
+2. **Pull the Model**:
+   ```bash
+   ollama pull llama3.2
+   ```
+
+3. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-2. Set your OpenAI API key in a `.env` file (see `.env.example`).
-3. Run the application (FastAPI):
-   ```bash
-   python main.py
-   ```
-4. Or run the Streamlit application:
-   ```bash
-   streamlit run streamlit_app.py
-   ```
-5. Open your browser at the provided URL.
 
-## Testing
-Run unit tests:
-```bash
-export PYTHONPATH=$PYTHONPATH:.
-python3 tests/test_agent.py
-```
+4. **Run the Application**:
+   - **Streamlit (Recommended)**:
+     ```bash
+     streamlit run streamlit_app.py
+     ```
+   - **FastAPI**:
+     ```bash
+     python main.py
+     ```
 
-## Demo
-You can also run a quick CLI demo:
-```bash
-python demo.py
-```
+## 📁 Repository Structure
+
+- `src/`: Core logic (Agent, Memory Manager, Utils).
+- `templates/`: HTML templates for FastAPI.
+- `data/`: Persistent storage for documents and vector database.
+- `logs/`: Application logs (powered by Loguru).
+- `tests/`: Automated test suite.
+
+## 🔒 Privacy & Security
+
+- **Local Processing**: All embeddings and LLM inferences happen on your local hardware.
+- **No Cloud Dependency**: Works entirely offline after the initial setup.
+- **Data Persistence**: Your documents are stored in `data/documents/` and indexed in `data/chroma_db/`.
+
+---
+*Built with Python, onprem, ChromaDB, and FastAPI.*
