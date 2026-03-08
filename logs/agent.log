@@ -1,0 +1,20 @@
+2026-03-08 11:08:30.999 | INFO     | src.rag_agent:answer_question:74 - Answering question: What is the local answer?
+2026-03-08 11:08:30.999 | INFO     | src.rag_agent:answer_question:77 - Rewritten query: What is the local answer?
+2026-03-08 11:08:30.999 | INFO     | src.rag_agent:answer_question:92 - Performing Vector Search and LLM Generation...
+2026-03-08 11:08:30.999 | SUCCESS  | src.rag_agent:answer_question:94 - Generated response successfully
+2026-03-08 11:08:31.061 | INFO     | src.rag_agent:ingest_document:41 - Ingesting document: data/test.txt
+2026-03-08 11:08:31.062 | SUCCESS  | src.rag_agent:ingest_document:47 - Successfully ingested: data/test.txt
+2026-03-08 11:08:31.065 | INFO     | src.rag_agent:answer_question:74 - Answering question: Test Question
+2026-03-08 11:08:31.065 | INFO     | src.rag_agent:answer_question:77 - Rewritten query: Test Question
+2026-03-08 11:08:31.065 | INFO     | src.rag_agent:answer_question:92 - Performing Vector Search and LLM Generation...
+2026-03-08 11:08:31.065 | SUCCESS  | src.rag_agent:answer_question:94 - Generated response successfully
+2026-03-08 11:09:10.183 | INFO     | src.rag_agent:answer_question:74 - Answering question: What is the local answer?
+2026-03-08 11:09:10.183 | INFO     | src.rag_agent:answer_question:77 - Rewritten query: What is the local answer?
+2026-03-08 11:09:10.183 | INFO     | src.rag_agent:answer_question:92 - Performing Vector Search and LLM Generation...
+2026-03-08 11:09:10.183 | SUCCESS  | src.rag_agent:answer_question:94 - Generated response successfully
+2026-03-08 11:09:10.185 | INFO     | src.rag_agent:ingest_document:41 - Ingesting document: data/test.txt
+2026-03-08 11:09:10.185 | SUCCESS  | src.rag_agent:ingest_document:47 - Successfully ingested: data/test.txt
+2026-03-08 11:09:10.188 | INFO     | src.rag_agent:answer_question:74 - Answering question: Test Question
+2026-03-08 11:09:10.188 | INFO     | src.rag_agent:answer_question:77 - Rewritten query: Test Question
+2026-03-08 11:09:10.188 | INFO     | src.rag_agent:answer_question:92 - Performing Vector Search and LLM Generation...
+2026-03-08 11:09:10.188 | SUCCESS  | src.rag_agent:answer_question:94 - Generated response successfully

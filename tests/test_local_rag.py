@@ -16,7 +16,8 @@ def test_answer_question_local():
     mock_llm_instance.ask.return_value = {
         "answer": "This is a local answer.",
         "source_documents": [
-            MagicMock(metadata={"source": "local_doc.pdf"})
+            MagicMock(metadata={"source": "local_doc.pdf"}),
+            MagicMock(metadata={"source": "local_doc_2.pdf"})
         ]
     }
 
