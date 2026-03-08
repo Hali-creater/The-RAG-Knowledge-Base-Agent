@@ -1,8 +1,9 @@
-onprem[chroma]
+onprem
 langchain
 langchain-community
 langchain-text-splitters
 chromadb
+langchain-chroma
 pypdf
 docx2txt
 unstructured
