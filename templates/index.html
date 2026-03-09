@@ -82,8 +82,18 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 space-y-8">
-            <!-- Upload Section -->
+            <!-- Role Selector -->
             <div>
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">User Identity</h2>
+                <select id="roleSelector" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold p-2 rounded-xl focus:outline-none">
+                    <option value="Employee" selected>Employee</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
+            <!-- Upload Section -->
+            <div id="uploadContainer" class="hidden">
                 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">Knowledge Core</h2>
                 <div class="bg-slate-50 rounded-2xl p-4 border-dashed border-2 border-slate-200 hover:border-blue-500 transition-colors cursor-pointer group relative">
                     <form id="uploadForm">
@@ -93,7 +103,16 @@
                             <p class="text-sm font-bold text-slate-900">Drop files or click</p>
                             <p class="text-xs text-slate-500 mt-1 font-bold">PDF, DOCX, TXT, MD</p>
                         </div>
-                        <button type="submit" class="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center">
+                        <div class="mt-3">
+                            <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Target Area</label>
+                            <select id="ingestArea" class="w-full bg-white border border-slate-200 text-[10px] font-bold p-1.5 rounded-lg mb-3">
+                                <option value="General">General</option>
+                                <option value="HR">HR</option>
+                                <option value="Legal">Legal</option>
+                                <option value="Sales">Sales</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center">
                             <i class="fas fa-plus mr-2 text-xs"></i> INGEST DATA
                         </button>
                     </form>
@@ -126,10 +145,24 @@
     <main class="flex-1 flex flex-col relative bg-white">
         <!-- Top Navigation -->
         <header class="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md z-10">
-            <div class="flex items-center space-x-2">
-                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-tighter">Intelligent Assistant</h2>
-                <span class="text-slate-900 text-sm px-2 font-black">/</span>
-                <span class="text-sm text-blue-600 font-black uppercase tracking-tighter">Live Context</span>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-tighter">Intelligent Assistant</h2>
+                    <span class="text-slate-900 text-sm px-2 font-black">/</span>
+                </div>
+                <select id="queryArea" class="bg-slate-100 border-none text-[10px] font-black uppercase px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-500/20">
+                    <option value="General">General Context</option>
+                    <option value="HR">HR Area</option>
+                    <option value="Legal">Legal Area</option>
+                    <option value="Sales">Sales Area</option>
+                </select>
+
+                <select id="assistantType" class="bg-blue-50 border-none text-[10px] font-black uppercase px-3 py-1.5 rounded-lg text-blue-600 focus:ring-2 focus:ring-blue-500/20">
+                    <option value="General">General Assistant</option>
+                    <option value="HR">HR Specialist</option>
+                    <option value="Legal">Legal Advisor</option>
+                    <option value="Finance">Finance Expert</option>
+                </select>
             </div>
             <div class="flex items-center space-x-4">
                 <div class="flex -space-x-2">
@@ -229,6 +262,20 @@
         const fileInput = document.getElementById('fileInput');
         const documentList = document.getElementById('documentList');
         const clearHistoryBtn = document.getElementById('clearHistory');
+        const roleSelector = document.getElementById('roleSelector');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const ingestArea = document.getElementById('ingestArea');
+        const queryArea = document.getElementById('queryArea');
+        const assistantType = document.getElementById('assistantType');
+
+        roleSelector.addEventListener('change', () => {
+            const role = roleSelector.value;
+            if (role === 'Admin' || role === 'Manager') {
+                uploadContainer.classList.remove('hidden');
+            } else {
+                uploadContainer.classList.add('hidden');
+            }
+        });
 
         function appendMessage(text, role, sources = [], query = null) {
             if (welcomeMessage) {
@@ -322,6 +369,8 @@
             try {
                 const url = new URL('/ask', window.location.origin);
                 if (groqApiKey) url.searchParams.append('groq_api_key', groqApiKey);
+                url.searchParams.append('knowledge_area', queryArea.value);
+                url.searchParams.append('assistant_type', assistantType.value);
 
                 const response = await fetch(url.toString(), {
                     method: 'POST',
@@ -360,7 +409,10 @@
             button.disabled = true;
 
             try {
-                const response = await fetch('/upload', {
+                const url = new URL('/upload', window.location.origin);
+                url.searchParams.append('knowledge_area', ingestArea.value);
+
+                const response = await fetch(url.toString(), {
                     method: 'POST',
                     body: formData
                 });

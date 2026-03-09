@@ -29,9 +29,10 @@ async def read_item(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/upload")
-async def upload_files(files: List[UploadFile] = File(...)):
+async def upload_files(files: List[UploadFile] = File(...), knowledge_area: str = "General"):
     count = 0
     errors = []
+    results = []
     for file in files:
         if allowed_file(file.filename):
             safe_filename = os.path.basename(file.filename)
@@ -41,10 +42,11 @@ async def upload_files(files: List[UploadFile] = File(...)):
                     shutil.copyfileobj(file.file, buffer)
 
                 # Ingest to RAG Agent
-                agent.ingest_document(file_path)
+                ingest_res = agent.ingest_document(file_path, knowledge_area=knowledge_area)
                 # Move to data/documents for persistence
                 shutil.move(file_path, os.path.join("data/documents", safe_filename))
                 count += 1
+                results.append({"filename": file.filename, "summary": ingest_res["summary"]})
             except Exception as e:
                 errors.append(f"Error processing {file.filename}: {str(e)}")
         else:
@@ -56,12 +58,12 @@ async def upload_files(files: List[UploadFile] = File(...)):
         return JSONResponse(status_code=207, content={"count": count, "errors": errors})
 
 @app.post("/ask")
-async def ask_question(request: QuestionRequest, groq_api_key: Optional[str] = None):
+async def ask_question(request: QuestionRequest, groq_api_key: Optional[str] = None, knowledge_area: str = "General", assistant_type: str = "General"):
     if groq_api_key:
         os.environ["GROQ_API_KEY"] = groq_api_key
 
     try:
-        response = agent.answer_question(request.question)
+        response = agent.answer_question(request.question, knowledge_area=knowledge_area, assistant_type=assistant_type)
         return response
     except Exception as e:
         error_msg = str(e)
