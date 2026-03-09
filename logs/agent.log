@@ -28,3 +28,13 @@
 2026-03-08 11:28:53.889 | INFO     | src.rag_agent:answer_question:77 - Rewritten query: Test Question
 2026-03-08 11:28:53.889 | INFO     | src.rag_agent:answer_question:92 - Performing Vector Search and LLM Generation...
 2026-03-08 11:28:53.889 | SUCCESS  | src.rag_agent:answer_question:94 - Generated response successfully
+2026-03-09 10:06:11.956 | INFO     | src.rag_agent:answer_question:84 - Answering question: What is the local answer?
+2026-03-09 10:06:11.957 | INFO     | src.rag_agent:answer_question:87 - Rewritten query: What is the local answer?
+2026-03-09 10:06:11.957 | INFO     | src.rag_agent:answer_question:102 - Performing Vector Search and LLM Generation...
+2026-03-09 10:06:11.958 | SUCCESS  | src.rag_agent:answer_question:111 - Generated response successfully
+2026-03-09 10:06:11.959 | INFO     | src.rag_agent:ingest_document:51 - Ingesting document: data/test.txt
+2026-03-09 10:06:11.960 | SUCCESS  | src.rag_agent:ingest_document:57 - Successfully ingested: data/test.txt
+2026-03-09 10:06:11.963 | INFO     | src.rag_agent:answer_question:84 - Answering question: Test Question
+2026-03-09 10:06:11.964 | INFO     | src.rag_agent:answer_question:87 - Rewritten query: Test Question
+2026-03-09 10:06:11.964 | INFO     | src.rag_agent:answer_question:102 - Performing Vector Search and LLM Generation...
+2026-03-09 10:06:11.964 | SUCCESS  | src.rag_agent:answer_question:111 - Generated response successfully
