@@ -40,3 +40,5 @@
 2026-03-09 10:06:11.964 | SUCCESS  | src.rag_agent:answer_question:111 - Generated response successfully
 2026-03-09 17:11:21.551 | INFO     | src.rag_agent:answer_question:116 - Answering question: test in area: General as HR
 2026-03-09 17:11:21.551 | INFO     | src.rag_agent:answer_question:120 - Rewritten query: test
+2026-03-09 17:53:31.194 | INFO     | src.rag_agent:answer_question:116 - Answering question: test in area: HR as General
+2026-03-09 17:53:31.196 | INFO     | src.rag_agent:answer_question:120 - Rewritten query: standalone

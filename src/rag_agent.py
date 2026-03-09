@@ -44,7 +44,7 @@ class RAGAgent:
             self._vector_store = VectorStore()
         return self._vector_store
 
-    def ingest_document(self, file_path: str, knowledge_area: str = "General"):
+    def ingest_document(self, file_path: str, knowledge_area: str = "General", **kwargs):
         logger.info(f"Ingesting document: {file_path} into {knowledge_area}")
         base_name = os.path.basename(file_path)
 
@@ -112,7 +112,7 @@ class RAGAgent:
         except Exception:
             return question
 
-    def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General") -> Dict:
+    def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", **kwargs) -> Dict:
         logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type}")
 
         # Step 1: Query Rewriting
