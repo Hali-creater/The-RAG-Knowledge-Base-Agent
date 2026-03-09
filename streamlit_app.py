@@ -128,6 +128,9 @@ ensure_dirs()
 # Initialize session state for RAG Agent
 if "agent" not in st.session_state:
     st.session_state.agent = RAGAgent()
+# Force re-initialization if signature changed or object is stale
+elif not hasattr(st.session_state.agent, 'ingest_document') or st.session_state.agent.__class__.__name__ != 'RAGAgent':
+    st.session_state.agent = RAGAgent()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
