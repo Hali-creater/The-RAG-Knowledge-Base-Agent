@@ -4,8 +4,8 @@ A 100% local, privacy-first Retrieval-Augmented Generation (RAG) agent. No data 
 
 ## 🚀 Key Features
 
-- **Local LLM Integration**: Powered by `onprem` and `Ollama` (defaulting to `llama3.2`).
-- **Advanced RAG Pipeline**:
+- **Groq AI Integration**: Ultra-fast inference using Groq's API (defaulting to `llama-3.3-70b-versatile`).
+- **Hybrid RAG Pipeline**:
   - **Vector Database**: Semantic search using local ChromaDB.
   - **Query Rewriting**: Automatically refines vague follow-up questions for better retrieval.
   - **Chunking Control**: Configurable chunk size and overlap for precision.
@@ -25,22 +25,17 @@ graph TD
     Rewriter -->|Standalone Query| Search[Vector Search]
     Search -->|Context Chunks| VDB[(ChromaDB)]
     VDB -->|Retrieve| Agent
-    Agent -->|2. Generate| LLM[Local Llama 3.2]
+    Agent -->|2. Generate| LLM[Groq Llama 3.3]
     LLM -->|Answer + Sources| UI
     UI -->|Display| User
 ```
 
 ## 🛠 Installation
 
-1. **Install Ollama**:
-   Download and install from [ollama.com](https://ollama.com).
+1. **Get a Groq API Key**:
+   Create a free account and get your key at [console.groq.com](https://console.groq.com).
 
-2. **Pull the Model**:
-   ```bash
-   ollama pull llama3.2
-   ```
-
-3. **Install Dependencies**:
+2. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
@@ -65,8 +60,8 @@ graph TD
 
 ## 🔒 Privacy & Security
 
-- **Local Processing**: All embeddings and LLM inferences happen on your local hardware.
-- **No Cloud Dependency**: Works entirely offline after the initial setup.
+- **Local Embeddings**: Document embeddings are generated locally for privacy.
+- **Secure API**: Only text context and queries are sent to Groq for ultra-fast inference.
 - **Data Persistence**: Your documents are stored in `data/documents/` and indexed in `data/chroma_db/`.
 
 ---
