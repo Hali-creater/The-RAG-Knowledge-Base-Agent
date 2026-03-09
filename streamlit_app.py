@@ -132,8 +132,33 @@ if "agent" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "user_role" not in st.session_state:
+    st.session_state.user_role = "Employee"
+
+if "knowledge_area" not in st.session_state:
+    st.session_state.knowledge_area = "General"
+
+if "assistant_type" not in st.session_state:
+    st.session_state.assistant_type = "General"
+
 # Sidebar
 with st.sidebar:
+    st.markdown("### 👤 User Settings")
+    st.session_state.user_role = st.selectbox(
+        "Select Your Role",
+        ["Admin", "Manager", "Employee"],
+        index=2,
+        help="Roles control access to management and ingestion tools."
+    )
+
+    st.session_state.assistant_type = st.selectbox(
+        "AI Assistant Persona",
+        ["General", "HR", "Legal", "Finance"],
+        index=0,
+        help="Specialized personas for different tasks."
+    )
+
+    st.markdown("---")
     st.markdown("""
         <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 2rem;'>
             <div style='background: #3b82f6; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px;'>
@@ -144,35 +169,47 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.subheader("📁 Knowledge Core")
-    uploaded_files = st.file_uploader(
-        "Upload proprietary documents",
-        type=["pdf", "docx", "txt", "md"],
-        accept_multiple_files=True,
-        help="Upload files to extend the agent's knowledge base."
-    )
 
-    if uploaded_files:
-        if st.button("✨ Process Knowledge", use_container_width=True, type="primary"):
-            if st.session_state.agent:
-                with st.spinner("Analyzing and chunking..."):
-                    success_count = 0
-                    for uploaded_file in uploaded_files:
-                        try:
-                            safe_filename = os.path.basename(uploaded_file.name)
-                            file_path = os.path.join("uploads", safe_filename)
-                            with open(file_path, "wb") as f:
-                                f.write(uploaded_file.getbuffer())
+    # Restrict ingestion to Admin and Manager
+    if st.session_state.user_role in ["Admin", "Manager"]:
+        selected_area = st.selectbox(
+            "Target Knowledge Area",
+            ["General", "HR", "Legal", "Sales", "Technical"],
+            index=0
+        )
 
-                            st.session_state.agent.ingest_document(file_path)
-                            shutil.move(file_path, os.path.join("data/documents", safe_filename))
-                            success_count += 1
-                        except Exception as e:
-                            st.error(f"❌ Error processing `{uploaded_file.name}`: {str(e)}")
+        uploaded_files = st.file_uploader(
+            "Upload proprietary documents",
+            type=["pdf", "docx", "txt", "md"],
+            accept_multiple_files=True,
+            help="Upload files to extend the agent's knowledge base."
+        )
 
-                    if success_count > 0:
-                        st.success(f"Successfully ingested {success_count} sources!")
-            else:
-                st.error("Agent not initialized.")
+        if uploaded_files:
+            if st.button("✨ Process Knowledge", use_container_width=True, type="primary"):
+                if st.session_state.agent:
+                    with st.spinner("Analyzing and chunking..."):
+                        success_count = 0
+                        for uploaded_file in uploaded_files:
+                            try:
+                                safe_filename = os.path.basename(uploaded_file.name)
+                                file_path = os.path.join("uploads", safe_filename)
+                                with open(file_path, "wb") as f:
+                                    f.write(uploaded_file.getbuffer())
+
+                                result = st.session_state.agent.ingest_document(file_path, knowledge_area=selected_area)
+                                shutil.move(file_path, os.path.join("data/documents", safe_filename))
+                                success_count += 1
+                                st.info(f"📄 **{uploaded_file.name} Summary:** {result['summary']}")
+                            except Exception as e:
+                                st.error(f"❌ Error processing `{uploaded_file.name}`: {str(e)}")
+
+                        if success_count > 0:
+                            st.success(f"Successfully ingested {success_count} sources into {selected_area}!")
+                else:
+                    st.error("Agent not initialized.")
+    else:
+        st.warning("Only Admins and Managers can ingest documents.")
 
     st.markdown("---")
     st.subheader("📚 Loaded Sources")
@@ -195,6 +232,22 @@ with st.sidebar:
 # Main Interface
 st.title("Intelligent Knowledge Assistant")
 st.markdown("<p style='color: #0f172a; font-size: 18px; font-weight: 800;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
+
+# Dashboard Mockup
+if st.session_state.user_role == "Admin":
+    with st.expander("📊 Admin Analytics Dashboard", expanded=False):
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Most Asked", "HR Policy")
+        c2.metric("Most Used Doc", "legal_template.pdf")
+        c3.metric("Daily Queries", "142")
+        st.line_chart([10, 25, 15, 40, 35, 60, 45])
+
+# Area Selection for Queries
+st.session_state.knowledge_area = st.segmented_control(
+    "Query Knowledge Area",
+    ["General", "HR", "Legal", "Sales", "Technical"],
+    default="General"
+)
 
 # Groq API Key Check
 if not os.getenv("GROQ_API_KEY"):
@@ -246,9 +299,13 @@ if prompt:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Thinking with Groq..."):
+            with st.spinner(f"Assistant ({st.session_state.knowledge_area}) is thinking..."):
                 try:
-                    response_data = st.session_state.agent.answer_question(prompt)
+                    response_data = st.session_state.agent.answer_question(
+                        prompt,
+                        knowledge_area=st.session_state.knowledge_area,
+                        assistant_type=st.session_state.assistant_type
+                    )
                     full_response = response_data["answer"]
                     st.markdown(full_response)
 

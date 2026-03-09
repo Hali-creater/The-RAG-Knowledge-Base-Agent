@@ -22,10 +22,13 @@ class VectorStore:
     def add_documents(self, documents: List[Document]):
         self.vector_store.add_documents(documents)
 
-    def similarity_search(self, query: str, k: int = 5, score_threshold: float = 0.4):
-        # Relevance score thresholding
+    def similarity_search(self, query: str, k: int = 5, score_threshold: float = 0.4, knowledge_area: Optional[str] = None):
+        filter_dict = {}
+        if knowledge_area and knowledge_area != "General":
+            filter_dict["knowledge_area"] = knowledge_area
+
         results = self.vector_store.similarity_search_with_relevance_scores(
-            query, k=k, score_threshold=score_threshold
+            query, k=k, score_threshold=score_threshold, filter=filter_dict if filter_dict else None
         )
         return results
 
@@ -35,7 +38,7 @@ class VectorStore:
         except Exception:
             pass
 
-    def get_all_sources(self):
+    def get_all_sources(self, knowledge_area: Optional[str] = None):
         try:
             data = self.vector_store.get()
         except Exception:
