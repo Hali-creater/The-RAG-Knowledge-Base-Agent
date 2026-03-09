@@ -27,14 +27,24 @@ class RAGAgent:
     @property
     def llm(self):
         if self._llm is None:
+            # Check for remote Ollama base URL
+            ollama_base_url = os.getenv("OLLAMA_BASE_URL")
+            llm_kwargs = {
+                "verbose": False,
+                "db_path": self.db_path,
+                "chunk_size": self.chunk_size,
+                "chunk_overlap": self.chunk_overlap
+            }
+
+            # If OLLAMA_BASE_URL is set, we use it to connect to remote Ollama
+            model_url = self.model_name
+            if ollama_base_url and "ollama" in self.model_name:
+                model_url = ollama_base_url
+                llm_kwargs["model"] = self.model_name.replace("ollama/", "")
+                logger.info(f"Connecting to remote Ollama at {ollama_base_url}")
+
             # Using onprem LLM with the specified model
-            self._llm = LLM(
-                self.model_name,
-                verbose=False,
-                db_path=self.db_path,
-                chunk_size=self.chunk_size,
-                chunk_overlap=self.chunk_overlap
-            )
+            self._llm = LLM(model_url, **llm_kwargs)
         return self._llm
 
     def ingest_document(self, file_path: str):
@@ -90,7 +100,14 @@ class RAGAgent:
         # Step 3: Ask the local LLM (Performs RAG internally)
         # onprem's ask() method performs RAG and returns a dictionary or string
         logger.info("Performing Vector Search and LLM Generation...")
-        result = self.llm.ask(final_prompt)
+        try:
+            result = self.llm.ask(final_prompt)
+        except Exception as e:
+            error_str = str(e)
+            if "Cannot assign requested address" in error_str or "ConnectionError" in error_str:
+                logger.error(f"Connection error to Ollama: {error_str}")
+                raise RuntimeError("Failed to connect to local AI engine (Ollama). Please ensure Ollama is running and accessible. If you are running in a container, you may need to set OLLAMA_BASE_URL.")
+            raise
         logger.success("Generated response successfully")
 
         # Depending on onprem version/config, result might be a dict or string
