@@ -127,7 +127,6 @@ ensure_dirs()
 
 # Initialize session state for RAG Agent
 if "agent" not in st.session_state:
-    # Local LLM doesn't need API key
     st.session_state.agent = RAGAgent()
 
 if "messages" not in st.session_state:
@@ -197,8 +196,15 @@ with st.sidebar:
 st.title("Intelligent Knowledge Assistant")
 st.markdown("<p style='color: #0f172a; font-size: 18px; font-weight: 800;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
 
-# Local LLM Info
-st.info("💡 **Local Operation:** This agent runs 100% locally using Ollama/Llama3.2. No data leaves your machine.")
+# Groq API Key Check
+if not os.getenv("GROQ_API_KEY"):
+    st.info("💡 **Welcome!** To get started, please provide your Groq API Key.")
+    groq_key = st.text_input("Enter Groq API Key", type="password")
+    if groq_key:
+        os.environ["GROQ_API_KEY"] = groq_key
+        st.success("API Key set successfully!")
+        st.rerun()
+    st.stop()
 
 # Display example questions if no messages
 if not st.session_state.messages and st.session_state.agent:
@@ -240,7 +246,7 @@ if prompt:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Thinking locally..."):
+            with st.spinner("Thinking with Groq..."):
                 try:
                     response_data = st.session_state.agent.answer_question(prompt)
                     full_response = response_data["answer"]

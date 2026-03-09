@@ -56,12 +56,18 @@ async def upload_files(files: List[UploadFile] = File(...)):
         return JSONResponse(status_code=207, content={"count": count, "errors": errors})
 
 @app.post("/ask")
-async def ask_question(request: QuestionRequest):
+async def ask_question(request: QuestionRequest, groq_api_key: Optional[str] = None):
+    if groq_api_key:
+        os.environ["GROQ_API_KEY"] = groq_api_key
+
     try:
         response = agent.answer_question(request.question)
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "GROQ_API_KEY" in error_msg:
+            raise HTTPException(status_code=401, detail="Groq API Key required.")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/documents")
 async def get_documents():

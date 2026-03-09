@@ -1,12 +1,13 @@
-onprem
 langchain
+langchain-groq
 langchain-community
+langchain-chroma
 langchain-text-splitters
 chromadb
-langchain-chroma
 pypdf
 docx2txt
 unstructured
+sentence-transformers
 python-dotenv
 pandas
 fastapi
