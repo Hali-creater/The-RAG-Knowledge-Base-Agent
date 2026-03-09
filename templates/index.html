@@ -134,6 +134,10 @@
                 <i class="fas fa-trash-alt mr-2 text-xs"></i> CLEAR CONVERSATION
             </button>
 
+            <button id="resetDB" class="w-full py-2.5 px-4 text-red-600 border-2 border-red-600 hover:bg-red-600 hover:text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center hidden">
+                <i class="fas fa-fire mr-2 text-xs"></i> RESET KNOWLEDGE
+            </button>
+
             <!-- Bootstrap styled button to show integration -->
             <button type="button" class="w-full py-2 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center" data-bs-toggle="modal" data-bs-target="#infoModal">
                 <i class="fas fa-info-circle mr-2"></i> SYSTEM DETAILS
@@ -262,6 +266,7 @@
         const fileInput = document.getElementById('fileInput');
         const documentList = document.getElementById('documentList');
         const clearHistoryBtn = document.getElementById('clearHistory');
+        const resetDBBtn = document.getElementById('resetDB');
         const roleSelector = document.getElementById('roleSelector');
         const uploadContainer = document.getElementById('uploadContainer');
         const ingestArea = document.getElementById('ingestArea');
@@ -274,6 +279,12 @@
                 uploadContainer.classList.remove('hidden');
             } else {
                 uploadContainer.classList.add('hidden');
+            }
+
+            if (role === 'Admin') {
+                resetDBBtn.classList.remove('hidden');
+            } else {
+                resetDBBtn.classList.add('hidden');
             }
         });
 
@@ -503,6 +514,18 @@
             chatWindow.innerHTML = '';
             if (welcomeMessage) welcomeMessage.style.display = 'flex';
             chatWindow.appendChild(welcomeMessage);
+        });
+
+        resetDBBtn.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to clear the entire knowledge base? This cannot be undone.')) return;
+
+            const response = await fetch('/reset', { method: 'POST' });
+            if (response.ok) {
+                alert('Knowledge base cleared.');
+                loadDocuments();
+            } else {
+                alert('Failed to clear knowledge base.');
+            }
         });
 
         loadDocuments();

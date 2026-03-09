@@ -82,6 +82,13 @@ async def clear_history():
     agent.memory_manager.clear_memory()
     return {"status": "cleared"}
 
+@app.post("/reset")
+async def reset_database():
+    if agent.clear_database():
+        return {"status": "reset"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to reset database")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

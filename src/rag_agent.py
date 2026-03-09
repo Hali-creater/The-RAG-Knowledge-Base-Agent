@@ -6,6 +6,7 @@ from src.vector_store import VectorStore
 from src.memory_manager import MemoryManager
 from src.document_loader import DocumentLoader
 from src.text_splitter import TextSplitter
+from src.utils import get_file_hash
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -47,8 +48,16 @@ class RAGAgent:
     def ingest_document(self, file_path: str, knowledge_area: str = "General", **kwargs):
         logger.info(f"Ingesting document: {file_path} into {knowledge_area}")
         base_name = os.path.basename(file_path)
+        file_hash = get_file_hash(file_path)
 
         try:
+            # Step 12: Content-based Deduplication
+            existing_sources = self.vector_store.get_all_sources_with_metadata()
+            for source in existing_sources:
+                if source.get("file_hash") == file_hash and source.get("knowledge_area") == knowledge_area:
+                    logger.info(f"Document {base_name} already ingested in {knowledge_area}. Skipping.")
+                    return {"chunks": 0, "summary": source.get("summary", "Already exists.")}
+
             docs = DocumentLoader.load_document(file_path)
             full_text = "\n".join([doc.page_content for doc in docs[:3]]) # Use first 3 pages for summary
             summary = self.summarize_document(full_text, base_name)
@@ -57,6 +66,7 @@ class RAGAgent:
                 doc.metadata["source"] = base_name
                 doc.metadata["knowledge_area"] = knowledge_area
                 doc.metadata["summary"] = summary
+                doc.metadata["file_hash"] = file_hash
 
             chunks = self.text_splitter.split_documents(docs)
 
@@ -111,6 +121,10 @@ class RAGAgent:
             return rewritten if rewritten else question
         except Exception:
             return question
+
+    def clear_database(self):
+        logger.warning("Clearing entire vector database...")
+        return self.vector_store.clear_database()
 
     def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", **kwargs) -> Dict:
         logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type}")
