@@ -11,5 +11,9 @@ class EmbeddingsManager:
 
     def get_embeddings(self):
         if self._embeddings is None:
-            self._embeddings = HuggingFaceEmbeddings(model_name=self.model_name)
+            self._embeddings = HuggingFaceEmbeddings(
+                model_name=self.model_name,
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
+            )
         return self._embeddings

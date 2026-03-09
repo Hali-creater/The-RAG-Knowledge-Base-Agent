@@ -6,10 +6,15 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_file_hash(filepath):
-    hasher = hashlib.md5()
+    """Generate SHA-256 hash of file content for deduplication."""
+    hasher = hashlib.sha256()
     with open(filepath, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
+        # Read in 64k chunks
+        while True:
+            chunk = f.read(65536)
+            if not chunk:
+                break
+            hasher.update(chunk)
     return hasher.hexdigest()
 
 def ensure_dirs():

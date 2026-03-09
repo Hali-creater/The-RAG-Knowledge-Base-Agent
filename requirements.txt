@@ -9,6 +9,9 @@ docx2txt
 unstructured
 sentence-transformers
 python-dotenv
+urllib3==2.2.3
+chardet==5.2.0
+charset-normalizer==3.3.2
 pandas
 fastapi
 uvicorn

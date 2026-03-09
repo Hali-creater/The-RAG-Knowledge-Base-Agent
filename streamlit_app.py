@@ -232,8 +232,24 @@ with st.sidebar:
             st.session_state.agent.memory_manager.clear_memory()
         st.rerun()
 
+    if st.session_state.user_role == "Admin":
+        if st.button("🔥 Reset Knowledge Base", use_container_width=True, type="secondary"):
+            if st.session_state.agent:
+                if st.session_state.agent.clear_database():
+                    st.success("Knowledge base cleared successfully!")
+                    st.rerun()
+                else:
+                    st.error("Failed to clear knowledge base.")
+
 # Main Interface
 st.title("Intelligent Knowledge Assistant")
+
+# Quick Connectivity Check
+if os.getenv("GROQ_API_KEY"):
+    st.markdown("<span style='color: #10b981; font-size: 12px; font-weight: 800;'>● Groq Engine Online</span>", unsafe_allow_html=True)
+else:
+    st.markdown("<span style='color: #ef4444; font-size: 12px; font-weight: 800;'>○ Groq Engine Offline</span>", unsafe_allow_html=True)
+
 st.markdown("<p style='color: #0f172a; font-size: 18px; font-weight: 800;'>Query your documents with precision and context-aware AI.</p>", unsafe_allow_html=True)
 
 # Dashboard Mockup
