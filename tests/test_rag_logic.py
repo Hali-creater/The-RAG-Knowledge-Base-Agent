@@ -3,21 +3,23 @@ from unittest.mock import MagicMock, patch
 from src.rag_agent import RAGAgent
 from langchain_core.messages import AIMessage
 
-@patch('src.rag_agent.ChatOpenAI')
+@patch('src.rag_agent.ChatGroq')
 @patch('src.rag_agent.VectorStore')
-def test_answer_question_standalone_query(mock_vector_store, mock_chat_openai):
+def test_answer_question_standalone_query(mock_vector_store, mock_chat_groq):
     # Setup mocks
     mock_llm_instance = MagicMock()
-    mock_chat_openai.return_value = mock_llm_instance
+    mock_chat_groq.return_value = mock_llm_instance
 
     # 1. Answer 1st question
     # 2. Reformulate 2nd question
     # 3. Answer 2nd question
-    mock_llm_instance.invoke.side_effect = [
-        AIMessage(content="The capital of France is Paris. [Source: geography.txt]"),
-        AIMessage(content="What is the population of Paris?"),
-        AIMessage(content="The population of Paris is about 2.1 million. [Source: geography.txt]")
-    ]
+    mock_res1 = MagicMock()
+    mock_res1.content = "The capital of France is Paris. [Source: geography.txt]"
+    mock_res2 = MagicMock()
+    mock_res2.content = "What is the population of Paris?"
+    mock_res3 = MagicMock()
+    mock_res3.content = "The population of Paris is about 2.1 million. [Source: geography.txt]"
+    mock_llm_instance.invoke.side_effect = [mock_res1, mock_res2, mock_res3]
 
     mock_vs_instance = MagicMock()
     mock_vector_store.return_value = mock_vs_instance
@@ -26,7 +28,7 @@ def test_answer_question_standalone_query(mock_vector_store, mock_chat_openai):
     ]
 
     import os
-    os.environ["OPENAI_API_KEY"] = "sk-dummy"
+    os.environ["GROQ_API_KEY"] = "gsk-dummy"
 
     agent = RAGAgent()
 
@@ -39,7 +41,7 @@ def test_answer_question_standalone_query(mock_vector_store, mock_chat_openai):
     # Check if reformulation was called
     assert mock_llm_instance.invoke.call_count == 3 # 1 for first answer, 1 for reformulation of second, 1 for second answer
     assert "The population of Paris" in response["answer"]
-    assert "geography.txt" in response["sources"]
+    assert any("geography.txt" in s for s in response["sources"])
 
 def test_memory_manager_history():
     from src.memory_manager import MemoryManager
