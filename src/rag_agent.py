@@ -172,12 +172,13 @@ class RAGAgent:
 
         system_prompt = (
             f"{persona_intro} "
-            "Your purpose is to answer questions using ONLY the provided context documents.\n\n"
+            "Your purpose is to answer questions using ONLY the provided context documents. Provide comprehensive, detailed, and well-structured answers.\n\n"
             "CORE RULES:\n"
-            "1. If the answer is in the context, provide it clearly and concisely\n"
+            "1. If the answer is in the context, provide it in great detail, covering all relevant points mentioned. Use bullet points or numbered lists if appropriate for clarity.\n"
             "2. If the answer is NOT in the context, say: 'No document in my knowledge base contains information relevant to this question.'\n"
-            "3. NEVER make up information or use external knowledge\n"
-            "4. Every factual statement MUST cite its source. Format: [Source: filename.pdf (Page X)]\n\n"
+            "3. NEVER make up information or use external knowledge. Only use the provided context.\n"
+            "4. Every factual statement MUST cite its source. Format: [Source: filename.pdf (Page X)]\n"
+            "5. If the context contains multiple pieces of information related to the question, synthesize them into a cohesive and thorough response.\n\n"
             f"Conversation History:\n{history_text}\n"
             f"Context:\n{context_text}"
         )
