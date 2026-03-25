@@ -20,9 +20,11 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p data/documents data/chroma_db uploads logs static
 
-# Expose ports for FastAPI (8000) and Streamlit (8501)
-EXPOSE 8000
-EXPOSE 8501
+# Ensure start script is executable
+RUN chmod +x start.sh
 
-# Default command (can be overridden to run streamlit)
-CMD ["python", "main.py"]
+# Expose port (Back4app will use PORT environment variable)
+EXPOSE 8080
+
+# Use start.sh as the entry point
+CMD ["./start.sh"]
