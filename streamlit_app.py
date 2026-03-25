@@ -15,16 +15,16 @@ st.set_page_config(
 # Advanced Custom CSS for a professional look
 st.markdown("""
     <style>
-    /* Main Background */
+    /* Main Background with soft gradient */
     .stApp {
-        background-color: #ffffff;
-        color: #0f172a;
-        font-weight: 700 !important;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        color: #1e293b;
+        font-family: 'Inter', sans-serif;
     }
 
-    /* Global bold for all text */
+    /* Global bold for clarity and punch */
     * {
-        font-weight: 700 !important;
+        font-weight: 600 !important;
     }
 
     /* Hide Streamlit Header/Footer */
@@ -32,92 +32,109 @@ st.markdown("""
         visibility: hidden;
     }
 
-    /* Sidebar Styling */
+    /* Sidebar Styling: Modern Minimalist */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
-        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        border-right: 1px solid #e2e8f0;
+        padding-top: 2rem;
     }
 
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] div {
+    section[data-testid="stSidebar"] h3 {
         color: #0f172a !important;
         font-weight: 800 !important;
+        letter-spacing: -0.02em;
     }
 
-    /* Custom Chat Container */
+    /* Custom Chat Container: Glassmorphism Style */
     .stChatMessage {
-        background-color: #f8fafc !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
-        border-radius: 1.5rem !important;
-        padding: 1.5rem !important;
-        margin-bottom: 1rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
-        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 1.25rem !important;
+        padding: 1.25rem !important;
+        margin-bottom: 1.25rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        transition: transform 0.2s ease-in-out;
     }
 
-    /* User message specific style */
+    .stChatMessage:hover {
+        transform: translateY(-2px);
+    }
+
+    /* User message: Vibrant Blue Gradient */
     div[data-testid="stChatMessageUser"] {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         border: none !important;
+        color: white !important;
     }
 
     div[data-testid="stChatMessageUser"] p,
     div[data-testid="stChatMessageUser"] span,
     div[data-testid="stChatMessageUser"] div {
         color: white !important;
-        font-weight: 800 !important;
+        font-weight: 600 !important;
     }
 
-    /* Input Field */
+    /* Input Field: Elevated & Sleek */
     div[data-testid="stChatInput"] {
-        background-color: #f8fafc !important;
+        background-color: #ffffff !important;
         border-radius: 1rem !important;
         border: 2px solid #3b82f6 !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     }
 
-    /* Input Text */
-    div[data-testid="stChatInput"] textarea {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-        font-size: 1.1rem !important;
-    }
-
-    /* Headings */
+    /* Headings: Premium Typography */
     h1 {
         font-weight: 800 !important;
-        letter-spacing: -0.025em !important;
-        color: #0f172a !important;
+        background: linear-gradient(90deg, #0f172a 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.05em !important;
     }
 
-    /* Sidebar components */
+    /* Sidebar components: High-Contrast Buttons */
     .stButton button {
         border-radius: 0.75rem !important;
-        font-weight: 800 !important;
-        text-transform: uppercase !important;
-        transition: all 0.2s ease !important;
-        background-color: #3b82f6 !important;
-        color: white !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        letter-spacing: 0.01em;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 0.5rem 1rem !important;
     }
 
-    .stButton button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    .stButton button[kind="primary"] {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border: none !important;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4) !important;
     }
 
-    /* Document list items */
-    .doc-item {
-        background: #f8fafc;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        border-left: 4px solid #3b82f6;
+    .stButton button[kind="secondary"] {
+        border: 2px solid #e2e8f0 !important;
+        background: white !important;
         color: #0f172a !important;
-        font-weight: 800 !important;
+    }
+
+    /* Document list items: Clean Cards */
+    .doc-item {
+        background: #ffffff;
+        padding: 0.85rem;
+        border-radius: 0.75rem;
+        margin-bottom: 0.65rem;
+        border: 1px solid #e2e8f0;
+        border-left: 6px solid #3b82f6;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    /* Metrics: Sophisticated Cards */
+    div[data-testid="stMetric"] {
+        background: white;
+        padding: 1rem;
+        border-radius: 1rem;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     </style>
     """, unsafe_allow_html=True)
