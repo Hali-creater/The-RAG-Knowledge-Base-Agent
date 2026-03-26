@@ -17,14 +17,14 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-    /* Main Background: Premium Lighter Dark */
+    /* Main Background: Premium Light */
     .stApp {
-        background: #1E293B;
-        color: #F8FAFC;
+        background: #F8FAFC;
+        color: #1E293B;
         font-family: 'Inter', sans-serif;
     }
 
-    /* Global adjustments: Bolder text for better legibility */
+    /* Global adjustments: Bolder text for maximum clarity */
     * {
         font-weight: 700 !important;
     }
@@ -34,65 +34,72 @@ st.markdown("""
         visibility: hidden;
     }
 
-    /* Sidebar Styling: Slate Dark */
+    /* Sidebar Styling: Crisp & Modern */
     section[data-testid="stSidebar"] {
-        background-color: #0F172A !important;
-        border-right: 1px solid #334155;
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0;
         padding-top: 1rem;
     }
 
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {
-        color: #F8FAFC !important;
+        color: #0F172A !important;
         font-weight: 800 !important;
     }
 
-    /* Custom Chat Container: Glassmorphism Style */
+    /* Custom Chat Container: Clean White Card */
     .stChatMessage {
-        background-color: #1E293B !important;
-        border: 1px solid #334155 !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
         border-radius: 1.25rem !important;
         padding: 1.25rem !important;
         margin-bottom: 1.25rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
-        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease-in-out;
     }
 
     .stChatMessage:hover {
         transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
     }
 
     /* User message: Vibrant Blue Gradient */
     div[data-testid="stChatMessageUser"] {
         background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
         border: none !important;
+        color: #FFFFFF !important;
     }
 
-    /* Assistant message: Slate Gray */
+    div[data-testid="stChatMessageUser"] p,
+    div[data-testid="stChatMessageUser"] span,
+    div[data-testid="stChatMessageUser"] div {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+
+    /* Assistant message: Soft White Card */
     div[data-testid="stChatMessageAssistant"] {
-        background-color: #334155 !important;
-        border: 1px solid #475569 !important;
+        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
     }
 
-    /* Input Field: Elevated & Sleek */
+    /* Input Field: Elevated & Bold */
     div[data-testid="stChatInput"] {
-        background-color: #0F172A !important;
+        background-color: #FFFFFF !important;
         border-radius: 1.25rem !important;
-        border: 2px solid #3B82F6 !important;
-        box-shadow: 0 0 30px rgba(59, 130, 246, 0.4) !important;
+        border: 2px solid #2563EB !important;
+        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.1) !important;
     }
 
-    /* Headings: Bright White Gradient */
+    /* Headings: High-Contrast Dark */
     h1, h2, h3 {
         font-weight: 800 !important;
-        background: linear-gradient(90deg, #FFFFFF 0%, #F1F5F9 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #0F172A !important;
         letter-spacing: -0.02em !important;
     }
 
-    /* Buttons: Premium Glow */
+    /* Buttons: Premium Blue */
     .stButton button {
         border-radius: 0.75rem !important;
         font-weight: 800 !important;
@@ -100,50 +107,52 @@ st.markdown("""
     }
 
     .stButton button[kind="primary"] {
-        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%) !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
         border: none !important;
-        box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.5) !important;
+        color: white !important;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2) !important;
     }
 
     .stButton button[kind="primary"]:hover {
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7) !important;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4) !important;
         transform: scale(1.02);
     }
 
     .stButton button[kind="secondary"] {
-        border: 1px solid #475569 !important;
-        background: #242936 !important;
-        color: #F8FAFC !important;
+        border: 2px solid #E2E8F0 !important;
+        background: #FFFFFF !important;
+        color: #1E293B !important;
     }
 
-    /* Document list items: Clean Cards */
+    /* Document list items: Clean White Cards */
     .doc-item {
-        background: #2D3748;
+        background: #FFFFFF;
         padding: 0.85rem;
         border-radius: 0.75rem;
         margin-bottom: 0.65rem;
-        border: 1px solid #475569;
-        border-left: 6px solid #3B82F6;
-        color: #F8FAFC !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #E2E8F0;
+        border-left: 6px solid #2563EB;
+        color: #1E293B !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
 
-    /* Metrics: Sophisticated Dark Cards */
+    /* Metrics: Sophisticated White Cards */
     div[data-testid="stMetric"] {
-        background: #242936 !important;
+        background: #FFFFFF !important;
         padding: 1.25rem !important;
         border-radius: 1rem !important;
-        border: 1px solid #334155 !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid #E2E8F0 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Glass effect for certain containers */
+    /* Glass effect for light mode */
     .glass-card {
-        background: rgba(36, 41, 54, 0.8);
+        background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(226, 232, 240, 0.5);
         border-radius: 1.25rem;
         padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
 
     /* Custom Status Badge */
@@ -224,8 +233,8 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("""
-        <div style='text-align: center; padding: 1rem; opacity: 0.9;'>
-            <p style='font-size: 12px; color: #F8FAFC;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
+        <div style='text-align: center; padding: 1rem;'>
+            <p style='font-size: 12px; color: #64748B; font-weight: 700;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -233,7 +242,7 @@ with st.sidebar:
 col1, col2 = st.columns([0.7, 0.3])
 with col1:
     st.markdown("<h1>Knowledge AI Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 18px; margin-top: -10px; color: #F8FAFC; font-weight: 800;'>Private • Secure • Business Ready</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 18px; margin-top: -10px; color: #475569; font-weight: 800;'>Private • Secure • Business Ready</p>", unsafe_allow_html=True)
 
 with col2:
     if os.getenv("GROQ_API_KEY"):
