@@ -1,5 +1,25 @@
 import os
 import hashlib
+import nltk
+
+def download_nltk_data():
+    """Download required NLTK data for unstructured loaders."""
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
+    try:
+        nltk.data.find('taggers/averaged_perceptron_tagger')
+    except LookupError:
+        nltk.download('averaged_perceptron_tagger')
+    try:
+        nltk.data.find('tokenizers/punkt_tab')
+    except LookupError:
+        nltk.download('punkt_tab')
+    try:
+        nltk.data.find('taggers/averaged_perceptron_tagger_eng')
+    except LookupError:
+        nltk.download('averaged_perceptron_tagger_eng')
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'md'}
@@ -22,3 +42,4 @@ def ensure_dirs():
     for d in dirs:
         if not os.path.exists(d):
             os.makedirs(d)
+    download_nltk_data()
