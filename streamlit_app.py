@@ -17,16 +17,16 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-    /* Main Background: Premium Dark */
+    /* Main Background: Premium Lighter Dark */
     .stApp {
-        background: #0E1117;
-        color: #E2E8F0;
+        background: #1E293B;
+        color: #F8FAFC;
         font-family: 'Inter', sans-serif;
     }
 
-    /* Global adjustments */
+    /* Global adjustments: Bolder text for better legibility */
     * {
-        font-weight: 600;
+        font-weight: 700 !important;
     }
 
     /* Hide Streamlit Header/Footer */
@@ -34,10 +34,10 @@ st.markdown("""
         visibility: hidden;
     }
 
-    /* Sidebar Styling: Sleek & Dark */
+    /* Sidebar Styling: Slate Dark */
     section[data-testid="stSidebar"] {
-        background-color: #1C1F26 !important;
-        border-right: 1px solid #2D3748;
+        background-color: #0F172A !important;
+        border-right: 1px solid #334155;
         padding-top: 1rem;
     }
 
@@ -50,12 +50,12 @@ st.markdown("""
 
     /* Custom Chat Container: Glassmorphism Style */
     .stChatMessage {
-        background-color: #1C1F26 !important;
-        border: 1px solid #2D3748 !important;
+        background-color: #1E293B !important;
+        border: 1px solid #334155 !important;
         border-radius: 1.25rem !important;
         padding: 1.25rem !important;
         margin-bottom: 1.25rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
         transition: transform 0.2s ease-in-out;
     }
 
@@ -63,30 +63,30 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
-    /* User message: Deep Blue Gradient */
+    /* User message: Vibrant Blue Gradient */
     div[data-testid="stChatMessageUser"] {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
         border: none !important;
     }
 
-    /* Assistant message: Slightly lighter grey */
+    /* Assistant message: Slate Gray */
     div[data-testid="stChatMessageAssistant"] {
-        background-color: #2D3748 !important;
-        border: 1px solid #4A5568 !important;
+        background-color: #334155 !important;
+        border: 1px solid #475569 !important;
     }
 
     /* Input Field: Elevated & Sleek */
     div[data-testid="stChatInput"] {
-        background-color: #1C1F26 !important;
+        background-color: #0F172A !important;
         border-radius: 1.25rem !important;
         border: 2px solid #3B82F6 !important;
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2) !important;
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.4) !important;
     }
 
-    /* Headings: Gradient Text */
+    /* Headings: Bright White Gradient */
     h1, h2, h3 {
         font-weight: 800 !important;
-        background: linear-gradient(90deg, #F8FAFC 0%, #94A3B8 100%);
+        background: linear-gradient(90deg, #FFFFFF 0%, #F1F5F9 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.02em !important;
@@ -95,25 +95,25 @@ st.markdown("""
     /* Buttons: Premium Glow */
     .stButton button {
         border-radius: 0.75rem !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         transition: all 0.3s ease !important;
     }
 
     .stButton button[kind="primary"] {
         background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%) !important;
         border: none !important;
-        box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39) !important;
+        box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.5) !important;
     }
 
     .stButton button[kind="primary"]:hover {
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7) !important;
         transform: scale(1.02);
     }
 
     .stButton button[kind="secondary"] {
-        border: 1px solid #4A5568 !important;
-        background: #1C1F26 !important;
-        color: #E2E8F0 !important;
+        border: 1px solid #475569 !important;
+        background: #242936 !important;
+        color: #F8FAFC !important;
     }
 
     /* Document list items: Clean Cards */
@@ -122,7 +122,7 @@ st.markdown("""
         padding: 0.85rem;
         border-radius: 0.75rem;
         margin-bottom: 0.65rem;
-        border: 1px solid #4A5568;
+        border: 1px solid #475569;
         border-left: 6px solid #3B82F6;
         color: #F8FAFC !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -130,18 +130,18 @@ st.markdown("""
 
     /* Metrics: Sophisticated Dark Cards */
     div[data-testid="stMetric"] {
-        background: #1C1F26 !important;
+        background: #242936 !important;
         padding: 1.25rem !important;
         border-radius: 1rem !important;
-        border: 1px solid #2D3748 !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
     }
 
     /* Glass effect for certain containers */
     .glass-card {
-        background: rgba(28, 31, 38, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(36, 41, 54, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 1.25rem;
         padding: 1.5rem;
     }
@@ -224,8 +224,8 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("""
-        <div style='text-align: center; padding: 1rem; opacity: 0.6;'>
-            <p style='font-size: 12px;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
+        <div style='text-align: center; padding: 1rem; opacity: 0.9;'>
+            <p style='font-size: 12px; color: #F8FAFC;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -233,7 +233,7 @@ with st.sidebar:
 col1, col2 = st.columns([0.7, 0.3])
 with col1:
     st.markdown("<h1>Knowledge AI Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 18px; margin-top: -10px; opacity: 0.8;'>Private • Secure • Business Ready</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 18px; margin-top: -10px; color: #F8FAFC; font-weight: 800;'>Private • Secure • Business Ready</p>", unsafe_allow_html=True)
 
 with col2:
     if os.getenv("GROQ_API_KEY"):
