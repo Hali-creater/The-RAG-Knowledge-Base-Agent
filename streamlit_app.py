@@ -224,6 +224,45 @@ with st.sidebar:
             st.session_state.agent.memory_manager.clear_memory()
         st.rerun()
 
+    if st.session_state.user_role in ["Admin", "Manager"]:
+        with st.expander("📁 Knowledge Ingestion", expanded=False):
+            selected_area = st.selectbox(
+                "Target Area",
+                ["General", "HR", "Legal", "Sales", "Technical"],
+                index=0,
+                key="side_kb_area"
+            )
+
+            uploaded_files = st.file_uploader(
+                "Drop documents here",
+                type=["pdf", "docx", "txt", "md"],
+                accept_multiple_files=True,
+                key="side_uploader"
+            )
+
+            if uploaded_files:
+                if st.button("✨ Process Knowledge", use_container_width=True, type="primary", key="side_process_btn"):
+                    if st.session_state.agent:
+                        with st.spinner("Analyzing..."):
+                            success_count = 0
+                            for uploaded_file in uploaded_files:
+                                try:
+                                    safe_filename = os.path.basename(uploaded_file.name)
+                                    file_path = os.path.join("uploads", safe_filename)
+                                    with open(file_path, "wb") as f:
+                                        f.write(uploaded_file.getbuffer())
+
+                                    result = st.session_state.agent.ingest_document(file_path, knowledge_area=selected_area)
+                                    shutil.move(file_path, os.path.join("data/documents", safe_filename))
+                                    success_count += 1
+                                    st.toast(f"✅ Indexed: {uploaded_file.name}")
+                                except Exception as e:
+                                    st.error(f"❌ Error: {str(e)}")
+
+                            if success_count > 0:
+                                st.success(f"Ingested {success_count} sources!")
+                                st.rerun()
+
     if st.session_state.user_role == "Admin":
         if st.button("🔥 Reset Knowledge Base", use_container_width=True, type="secondary"):
             if st.session_state.agent:
@@ -363,62 +402,17 @@ with tab_chat:
 with tab_kb:
     st.markdown("## 📁 Knowledge Management")
 
-    col_up, col_list = st.columns([0.6, 0.4])
-
-    with col_up:
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        st.subheader("📤 Ingest Documents")
-        if st.session_state.user_role in ["Admin", "Manager"]:
-            selected_area = st.selectbox(
-                "Target Knowledge Area",
-                ["General", "HR", "Legal", "Sales", "Technical"],
-                index=0,
-                key="kb_area_select"
-            )
-
-            uploaded_files = st.file_uploader(
-                "Drop your documents here",
-                type=["pdf", "docx", "txt", "md"],
-                accept_multiple_files=True,
-                help="Your data never leaves your system."
-            )
-
-            if uploaded_files:
-                if st.button("✨ Process Knowledge", use_container_width=True, type="primary", key="kb_process_btn"):
-                    if st.session_state.agent:
-                        with st.spinner("Analyzing and indexing..."):
-                            success_count = 0
-                            for uploaded_file in uploaded_files:
-                                try:
-                                    safe_filename = os.path.basename(uploaded_file.name)
-                                    file_path = os.path.join("uploads", safe_filename)
-                                    with open(file_path, "wb") as f:
-                                        f.write(uploaded_file.getbuffer())
-
-                                    result = st.session_state.agent.ingest_document(file_path, knowledge_area=selected_area)
-                                    shutil.move(file_path, os.path.join("data/documents", safe_filename))
-                                    success_count += 1
-                                    st.toast(f"✅ Indexed: {uploaded_file.name}")
-                                except Exception as e:
-                                    st.error(f"❌ Error processing `{uploaded_file.name}`: {str(e)}")
-
-                            if success_count > 0:
-                                st.success(f"Successfully ingested {success_count} sources!")
-                                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+    st.subheader("📚 Current Library")
+    if st.session_state.agent:
+        docs = os.listdir("data/documents") if os.path.exists("data/documents") else []
+        if docs:
+            # Grid layout for library
+            cols = st.columns(3)
+            for i, doc in enumerate(docs):
+                with cols[i % 3]:
+                    st.markdown(f"<div class='doc-item'>{doc} <br><span style='font-size: 10px; color: #10B981;'>✅ Indexed</span></div>", unsafe_allow_html=True)
         else:
-            st.warning("Only Admins and Managers can ingest documents.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    with col_list:
-        st.subheader("📚 Current Library")
-        if st.session_state.agent:
-            docs = os.listdir("data/documents") if os.path.exists("data/documents") else []
-            if docs:
-                for doc in docs:
-                    st.markdown(f"<div class='doc-item'>{doc} <span style='float: right; color: #10B981;'>✅ Indexed</span></div>", unsafe_allow_html=True)
-            else:
-                st.info("No sources loaded yet.")
+            st.info("No sources loaded yet. Use the sidebar to upload documents.")
 
 with tab_analytics:
     st.markdown("## 📊 System Insights")
