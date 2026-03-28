@@ -29,9 +29,17 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Hide Streamlit Header/Footer */
-    header, footer {
+    /* Refined Visibility: Hide only unnecessary Streamlit elements */
+    footer {
         visibility: hidden;
+    }
+
+    /* Hide Deploy button and Main Menu but keep sidebar toggle */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    header[data-testid="stHeader"] > div:nth-child(n+2) {
+        display: none !important;
     }
 
     /* Sidebar Styling: Crisp & Modern */
