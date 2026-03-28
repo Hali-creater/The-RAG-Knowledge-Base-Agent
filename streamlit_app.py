@@ -260,8 +260,12 @@ with st.sidebar:
                                     st.error(f"❌ Error: {str(e)}")
 
                             if success_count > 0:
-                                st.success(f"Ingested {success_count} sources!")
+                                st.session_state.ingestion_feedback = f"✅ Successfully ingested {success_count} sources!"
                                 st.rerun()
+
+            if "ingestion_feedback" in st.session_state:
+                st.success(st.session_state.ingestion_feedback)
+                # Clear after showing once if desired, but user asked for a note under button
 
     if st.session_state.user_role == "Admin":
         if st.button("🔥 Reset Knowledge Base", use_container_width=True, type="secondary"):
