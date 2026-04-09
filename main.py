@@ -58,12 +58,12 @@ async def upload_files(files: List[UploadFile] = File(...), knowledge_area: str 
         return JSONResponse(status_code=207, content={"count": count, "errors": errors})
 
 @app.post("/ask")
-async def ask_question(request: QuestionRequest, groq_api_key: Optional[str] = None, knowledge_area: str = "General", assistant_type: str = "General"):
+async def ask_question(request: QuestionRequest, groq_api_key: Optional[str] = None, knowledge_area: str = "General", assistant_type: str = "General", user_role: str = "Employee"):
     if groq_api_key:
         os.environ["GROQ_API_KEY"] = groq_api_key
 
     try:
-        response = agent.answer_question(request.question, knowledge_area=knowledge_area, assistant_type=assistant_type)
+        response = agent.answer_question(request.question, knowledge_area=knowledge_area, assistant_type=assistant_type, user_role=user_role)
         return response
     except Exception as e:
         error_msg = str(e)

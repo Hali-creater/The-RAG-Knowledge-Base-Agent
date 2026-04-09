@@ -38,8 +38,14 @@ def get_file_hash(filepath):
     return hasher.hexdigest()
 
 def ensure_dirs():
-    dirs = ['data/documents', 'data/chroma_db', 'uploads']
+    dirs = ['data/documents', 'data/chroma_db', 'uploads', 'logs']
     for d in dirs:
         if not os.path.exists(d):
             os.makedirs(d)
     download_nltk_data()
+
+ROLE_PERMISSIONS = {
+    "Admin": ["General", "HR", "Legal", "Sales", "Technical", "Executive Compensation"],
+    "Manager": ["General", "HR", "Legal", "Sales", "Technical"],
+    "Employee": ["General", "Sales", "Technical"]
+}

@@ -15,11 +15,13 @@ def test_answer_question_standalone_query(mock_vector_store, mock_chat_groq):
     # 3. Answer 2nd question
     mock_res1 = MagicMock()
     mock_res1.content = "The capital of France is Paris. [Source: geography.txt]"
+    mock_res_eval = MagicMock()
+    mock_res_eval.content = "95"
     mock_res2 = MagicMock()
     mock_res2.content = "What is the population of Paris?"
     mock_res3 = MagicMock()
     mock_res3.content = "The population of Paris is about 2.1 million. [Source: geography.txt]"
-    mock_llm_instance.invoke.side_effect = [mock_res1, mock_res2, mock_res3]
+    mock_llm_instance.invoke.side_effect = [mock_res1, mock_res_eval, mock_res2, mock_res3, mock_res_eval]
 
     mock_vs_instance = MagicMock()
     mock_vector_store.return_value = mock_vs_instance
@@ -39,7 +41,8 @@ def test_answer_question_standalone_query(mock_vector_store, mock_chat_groq):
     response = agent.answer_question("And what about its population?")
 
     # Check if reformulation was called
-    assert mock_llm_instance.invoke.call_count == 3 # 1 for first answer, 1 for reformulation of second, 1 for second answer
+    # Calls: 1. First Answer, 2. First Eval, 3. Second Rewrite, 4. Second Answer, 5. Second Eval
+    assert mock_llm_instance.invoke.call_count == 5
     assert "The population of Paris" in response["answer"]
     assert any("geography.txt" in s for s in response["sources"])
 

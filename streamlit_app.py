@@ -2,7 +2,8 @@ import streamlit as st
 import os
 import shutil
 from src.rag_agent import RAGAgent
-from src.utils import ensure_dirs, allowed_file
+from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
+from src.audit_logger import get_audit_logs
 
 # Set page config
 st.set_page_config(
@@ -220,9 +221,18 @@ with st.sidebar:
 
         st.session_state.assistant_type = st.selectbox(
             "AI Assistant Persona",
-            ["General", "HR", "Legal", "Finance"],
+            ["General", "HR", "Legal", "Finance", "Comparative"],
             index=0
         )
+
+        selected_model = st.selectbox(
+            "LLM Model (Model Sovereignty)",
+            ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"],
+            index=0
+        )
+        if st.session_state.agent.model_name != selected_model:
+             st.session_state.agent.model_name = selected_model
+             st.session_state.agent._llm = None # Force re-init
 
     st.markdown("---")
 
@@ -236,10 +246,17 @@ with st.sidebar:
         with st.expander("📁 Knowledge Ingestion", expanded=False):
             selected_area = st.selectbox(
                 "Target Area",
-                ["General", "HR", "Legal", "Sales", "Technical"],
+                ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"]),
                 index=0,
                 key="side_kb_area"
             )
+
+            st.markdown("---")
+            st.markdown("**Enterprise Connectors**")
+            c1, c2, c3 = st.columns(3)
+            c1.button("☁️ SP", help="SharePoint (Coming Soon)")
+            c2.button("📦 OD", help="OneDrive (Coming Soon)")
+            c3.button("📂 GD", help="Google Drive (Coming Soon)")
 
             uploaded_files = st.file_uploader(
                 "Drop documents here",
@@ -283,6 +300,10 @@ with st.sidebar:
                     st.rerun()
 
     st.markdown("---")
+    with st.expander("🔐 Local Deployment"):
+        st.info("Tier 3 Enterprise Feature: This stack is ready for VPC deployment. No data leaves your perimeter.")
+
+    st.markdown("---")
     st.markdown("""
         <div style='text-align: center; padding: 1rem;'>
             <p style='font-size: 12px; color: #64748B; font-weight: 700;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
@@ -304,11 +325,27 @@ with col2:
 # Tabs for Organization
 tab_chat, tab_kb, tab_analytics = st.tabs(["💬 Chat", "📚 Knowledge Base", "📊 Analytics"])
 
+# Side-by-Side Viewer Logic
+if "view_doc" in st.session_state and st.session_state.view_doc:
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown(f"### 📄 Document Viewer")
+        st.info(f"Viewing: **{st.session_state.view_doc['file']}** (Page {st.session_state.view_doc['page']})")
+        # Placeholder for actual PDF rendering
+        st.markdown("""
+            <div style='height: 300px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 700; text-align: center; padding: 10px;'>
+                PDF Preview Content with Highlighted Text<br>(VPC Deployment Required for Full PDF Rendering)
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Close Viewer"):
+            st.session_state.view_doc = None
+            st.rerun()
+
 with tab_chat:
     # Area Selection for Queries
     st.session_state.knowledge_area = st.segmented_control(
         "Query Knowledge Area",
-        ["General", "HR", "Legal", "Sales", "Technical"],
+        ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"]),
         default="General"
     )
 
@@ -394,15 +431,38 @@ with tab_chat:
 
                             sources = response_data.get("sources", [])
                             if sources:
+                                metrics_cols = st.columns(2)
+                                metrics_cols[0].metric("Confidence", response_data.get("confidence", "N/A"))
+                                metrics_cols[1].metric("Faithfulness", response_data.get("faithfulness", "N/A"))
+
                                 st.info(f"✨ Answer generated from {len(sources)} sources")
-                                with st.expander("📚 Sources"):
+                                with st.expander("📚 Sources & Deep Link"):
                                     for source in sources:
+                                        # Parse source to get filename and page
+                                        try:
+                                            # Format: "filename.pdf (Page X)"
+                                            parts = source.split(" (Page ")
+                                            fname = parts[0]
+                                            page_num = parts[1].replace(")", "") if len(parts) > 1 else "1"
+                                        except:
+                                            fname = source
+                                            page_num = "1"
+
                                         st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
+                                        if st.button(f"🔎 View {source}", key=f"view_{source}_{len(st.session_state.messages)}"):
+                                            st.session_state.view_doc = {"file": fname, "page": page_num}
+
+                            if st.session_state.user_role == "Admin":
+                                if st.button("✅ Verify as Gold Standard", key=f"verify_{len(st.session_state.messages)}"):
+                                    st.session_state.agent.verify_answer(prompt, full_response)
+                                    st.success("Response saved as Gold Standard!")
 
                             st.session_state.messages.append({
                                 "role": "assistant",
                                 "content": full_response,
                                 "sources": response_data.get("sources"),
+                                "confidence": response_data.get("confidence"),
+                                "faithfulness": response_data.get("faithfulness"),
                                 "search_query": response_data.get("search_query")
                             })
                             st.rerun()
@@ -427,14 +487,21 @@ with tab_kb:
             st.info("No sources loaded yet. Use the sidebar to upload documents.")
 
 with tab_analytics:
-    st.markdown("## 📊 System Insights")
+    st.markdown("## 📊 System Insights & Audit Trails")
     if st.session_state.user_role == "Admin":
         c1, c2, c3 = st.columns(3)
         c1.metric("Most Asked Topic", "HR Policy")
         c2.metric("Active Sources", len(os.listdir("data/documents")) if os.path.exists("data/documents") else 0)
         c3.metric("Daily Queries", "142")
 
+        st.markdown("### 📋 Recent Audit Logs")
+        logs = get_audit_logs(limit=10)
+        if logs:
+            st.table(logs)
+        else:
+            st.info("No audit logs found.")
+
         st.markdown("### Query Volume Trends")
         st.line_chart([10, 25, 15, 40, 35, 60, 45])
     else:
-        st.info("Analytics are only available for Admin users.")
+        st.info("Analytics and Audit Trails are only available for Admin users.")

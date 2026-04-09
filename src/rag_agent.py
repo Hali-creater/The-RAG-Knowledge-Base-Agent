@@ -6,7 +6,9 @@ from src.vector_store import VectorStore
 from src.memory_manager import MemoryManager
 from src.document_loader import DocumentLoader
 from src.text_splitter import TextSplitter
-from src.utils import get_file_hash
+from src.audit_logger import log_query
+from src.gold_standard import get_gold_standard, save_gold_standard
+from src.utils import get_file_hash, ROLE_PERMISSIONS
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -122,12 +124,61 @@ class RAGAgent:
         except Exception:
             return question
 
+    def evaluate_faithfulness(self, answer: str, context: str) -> str:
+        """Simple LLM-based faithfulness evaluation."""
+        eval_prompt = (
+            f"Given the following context and an answer, rate the faithfulness of the answer to the context "
+            f"on a scale of 0 to 100. Provide ONLY the number.\n\n"
+            f"Context: {context[:2000]}\n\n"
+            f"Answer: {answer[:1000]}\n\n"
+            f"Faithfulness Score:"
+        )
+        try:
+            messages = [
+                SystemMessage(content="You are an expert evaluator for RAG systems."),
+                HumanMessage(content=eval_prompt)
+            ]
+            score = self.llm.invoke(messages).content.strip()
+            return f"{score}%"
+        except Exception:
+            return "N/A"
+
+    def verify_answer(self, question: str, answer: str):
+        """Step 15: Human-in-the-loop verification."""
+        logger.info(f"Verifying answer for: {question}")
+        save_gold_standard(question, answer)
+        return True
+
     def clear_database(self):
         logger.warning("Clearing entire vector database...")
         return self.vector_store.clear_database()
 
     def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", **kwargs) -> Dict:
         logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type}")
+
+        # Step -1: Check Gold Standard
+        gold_answer = get_gold_standard(question)
+        if gold_answer:
+            logger.info(f"Found Gold Standard answer for: {question}")
+            return {
+                "answer": gold_answer + "\n\n*(Verified Gold Standard Response)*",
+                "sources": ["Verified Internal Knowledge"],
+                "confidence": "100%",
+                "faithfulness": "100%",
+                "search_query": question
+            }
+
+        # Step 0: Permission Check
+        user_role = kwargs.get("user_role", "Employee")
+        allowed_areas = ROLE_PERMISSIONS.get(user_role, ["General"])
+        if knowledge_area not in allowed_areas:
+             return {
+                "answer": f"Access Denied: Your role ({user_role}) does not have permission to access the '{knowledge_area}' knowledge area.",
+                "sources": [],
+                "confidence": "0%",
+                "faithfulness": "0%",
+                "search_query": question
+            }
 
         # Step 1: Query Rewriting
         search_query = self.rewrite_query(question)
@@ -165,6 +216,7 @@ class RAGAgent:
             "HR": "You are a specialized HR Assistant. Be professional, empathetic, and clear about company policies.",
             "Legal": "You are a Legal Compliance Assistant. Be precise, formal, and emphasize accuracy in legal citations.",
             "Finance": "You are a Financial Data Analyst. Be quantitative, analytical, and precise with numbers.",
+            "Comparative": "You are a Comparative Analysis Expert. Your goal is to find discrepancies, similarities, and differences between multiple documents or versions of policies.",
             "General": "You are a professional RAG Intelligence Agent."
         }
 
@@ -199,17 +251,39 @@ class RAGAgent:
         logger.success("Generated response successfully")
 
         # Confidence Scoring
-        confidence = "high" if len(results) >= 3 else "medium"
-        if len(results) < 2:
-            confidence = "low"
-            answer += "\n\n(Disclaimer: This information may be incomplete)"
+        avg_score = sum(score for _, score in results) / len(results) if results else 0
+        if avg_score > 0.8:
+            confidence_val = 90 + (avg_score - 0.8) * 50
+        elif avg_score > 0.6:
+            confidence_val = 70 + (avg_score - 0.6) * 100
+        else:
+            confidence_val = avg_score * 110
 
-        # Step 4: Maintain Conversation
+        confidence_val = min(99, max(10, confidence_val))
+        confidence = f"{confidence_val:.0f}%"
+
+        # Step 4: Evaluation Metrics (Faithfulness)
+        faithfulness_score = self.evaluate_faithfulness(answer, context_text)
+
+        # Step 5: Maintain Conversation
         self.memory_manager.add_exchange(question, answer)
+
+        # Step 6: Audit Logging
+        user_role = kwargs.get("user_role", "Unknown")
+        log_query(
+            user_role=user_role,
+            question=question,
+            answer=answer,
+            sources=sources,
+            knowledge_area=knowledge_area,
+            confidence=confidence,
+            assistant_type=assistant_type
+        )
 
         return {
             "answer": answer,
             "sources": sources,
             "confidence": confidence,
+            "faithfulness": faithfulness_score,
             "search_query": search_query
         }
