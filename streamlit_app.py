@@ -272,17 +272,33 @@ with st.sidebar:
                             success_count = 0
                             for uploaded_file in uploaded_files:
                                 try:
-                                    safe_filename = os.path.basename(uploaded_file.name)
+                                    # Use the actual filename from the uploaded object
+                                    original_name = uploaded_file.name
+                                    safe_filename = os.path.basename(original_name)
                                     file_path = os.path.join("uploads", safe_filename)
+
+                                    # Ensure uploads directory exists
+                                    os.makedirs("uploads", exist_ok=True)
+
                                     with open(file_path, "wb") as f:
                                         f.write(uploaded_file.getbuffer())
 
-                                    result = st.session_state.agent.ingest_document(file_path, knowledge_area=selected_area)
-                                    shutil.move(file_path, os.path.join("data/documents", safe_filename))
+                                    # Explicitly pass the knowledge_area and metadata
+                                    result = st.session_state.agent.ingest_document(
+                                        file_path,
+                                        knowledge_area=selected_area,
+                                        user_role=st.session_state.user_role
+                                    )
+
+                                    # Move to data/documents for persistence
+                                    dest_path = os.path.join("data/documents", safe_filename)
+                                    os.makedirs("data/documents", exist_ok=True)
+                                    shutil.move(file_path, dest_path)
+
                                     success_count += 1
-                                    st.toast(f"✅ Indexed: {uploaded_file.name}")
+                                    st.toast(f"✅ Indexed: {original_name}")
                                 except Exception as e:
-                                    st.error(f"❌ Error: {str(e)}")
+                                    st.error(f"❌ Error processing {uploaded_file.name}: {str(e)}")
 
                             if success_count > 0:
                                 st.session_state.ingestion_feedback = f"✅ Successfully ingested {success_count} sources!"

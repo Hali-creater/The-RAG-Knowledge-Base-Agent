@@ -103,10 +103,13 @@ class RAGAgent:
             return "Summary unavailable."
 
     def rewrite_query(self, question: str) -> str:
+        # Step 14: Contextual Query Rewriting
         history_text = self.memory_manager.get_formatted_history()
         if not history_text:
             return question
 
+        # If it's a short question and we have history, rewrite it.
+        # But if it's already a complex question, keep it as is unless it's a clear follow-up.
         rewrite_prompt = (
             f"Given the following conversation history, rewrite the user's latest question "
             f"to be a standalone question that captures the full context for document retrieval.\n\n"
@@ -181,7 +184,10 @@ class RAGAgent:
             }
 
         # Step 1: Query Rewriting
-        search_query = self.rewrite_query(question)
+        if self.memory_manager.history:
+            search_query = self.rewrite_query(question)
+        else:
+            search_query = question
         logger.info(f"Rewritten query: {search_query}")
 
         # Step 2: Retrieve Context
