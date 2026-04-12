@@ -156,8 +156,8 @@ class RAGAgent:
         logger.warning("Clearing entire vector database...")
         return self.vector_store.clear_database()
 
-    def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", **kwargs) -> Dict:
-        logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type}")
+    def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", language: str = "🇺🇸 English", **kwargs) -> Dict:
+        logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type} in {language}")
 
         # Step -1: Check Gold Standard
         gold_answer = get_gold_standard(question)
@@ -228,27 +228,52 @@ class RAGAgent:
 
         persona_intro = persona_map.get(assistant_type, persona_map["General"])
 
+        structure_map = {
+            "🇺🇸 English": {
+                "summary": "Summary",
+                "points": "Key Points",
+                "insights": "Insights",
+                "sources": "Sources"
+            },
+            "🇩🇪 German": {
+                "summary": "Zusammenfassung",
+                "points": "Wichtige Punkte",
+                "insights": "Erkenntnisse",
+                "sources": "Quellen"
+            },
+            "🇫🇷 French": {
+                "summary": "Résumé",
+                "points": "Points clés",
+                "insights": "Aperçus",
+                "sources": "Sources"
+            }
+        }
+        struct = structure_map.get(language, structure_map["🇺🇸 English"])
+
         system_prompt = (
             f"{persona_intro} "
+            f"Respond strictly in {language}. "
             "Your purpose is to answer questions using ONLY the provided context documents. Provide comprehensive, detailed, and well-structured answers.\n\n"
-            "RESPONSE STRUCTURE:\n"
-            "1. **Summary**: A brief overview of the answer.\n"
-            "2. **Key Points**: Use bullet points for detailed findings.\n"
-            "3. **Insights**: Strategic or analytical observations based on the context.\n"
-            "4. **Sources**: List the specific documents and pages used.\n\n"
+            "RESPONSE STRUCTURE (Use these headers translated to the output language):\n"
+            f"1. **{struct['summary']}**: A brief overview of the answer.\n"
+            f"2. **{struct['points']}**: Use bullet points for detailed findings.\n"
+            f"3. **{struct['insights']}**: Strategic or analytical observations based on the context.\n"
+            f"4. **{struct['sources']}**: List the specific documents and pages used.\n\n"
             "CORE RULES:\n"
-            "1. If the answer is in the context, provide it in great detail, covering all relevant points mentioned. Use the RESPONSE STRUCTURE above.\n"
-            "2. If the answer is NOT in the context, say: 'No document in my knowledge base contains information relevant to this question.'\n"
-            "3. NEVER make up information or use external knowledge. Only use the provided context.\n"
-            "4. Every factual statement MUST cite its source inline. Format: [Source: filename.pdf (Page X)]\n"
-            "5. If the context contains multiple pieces of information related to the question, synthesize them into a cohesive and thorough response.\n\n"
+            f"1. Respond strictly in {language}. "
+            "2. If the answer is in the context, provide it in great detail, covering all relevant points mentioned. Use the RESPONSE STRUCTURE above.\n"
+            "3. If the answer is NOT in the context, say: 'No document in my knowledge base contains information relevant to this question.' (translated to the output language)\n"
+            "4. NEVER make up information or use external knowledge. Only use the provided context.\n"
+            "5. Every factual statement MUST cite its source inline. Format: [Source: filename.pdf (Page X)]\n"
+            "6. If the context contains multiple pieces of information related to the question, synthesize them into a cohesive and thorough response.\n"
+            "7. If the source documents are in a different language than the output, provide an accurate technical translation of the key terms.\n\n"
             f"Conversation History:\n{history_text}\n"
             f"Context:\n{context_text}"
         )
 
         messages = [
             SystemMessage(content=system_prompt),
-            HumanMessage(content=f"Question: {question}\nAnswer using ONLY the above context:")
+            HumanMessage(content=f"Question: {question}\nOutput Language: {language}\nAnswer using ONLY the above context:")
         ]
 
         logger.info("Invoking Groq LLM...")
