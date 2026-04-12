@@ -185,6 +185,22 @@ st.markdown("""
         color: #EF4444;
         border: 1px solid #EF4444;
     }
+
+    /* Trust Indicator Bar */
+    .trust-bar-container {
+        width: 100%;
+        background-color: #E2E8F0;
+        border-radius: 10px;
+        height: 6px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .trust-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease-in-out;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -243,10 +259,15 @@ with st.sidebar:
             index=2
         )
 
+        persona_options = ["General", "HR", "Legal", "Finance", "Comparative"]
+        # Find index if already in session_state, else 0
+        current_persona = st.session_state.get("assistant_type", "General")
+        p_idx = persona_options.index(current_persona) if current_persona in persona_options else 0
+
         st.session_state.assistant_type = st.selectbox(
             t["sidebar_persona"],
-            ["General", "HR", "Legal", "Finance", "Comparative"],
-            index=0
+            persona_options,
+            index=p_idx
         )
 
         selected_model = st.selectbox(
@@ -265,6 +286,10 @@ with st.sidebar:
         if st.session_state.agent:
             st.session_state.agent.memory_manager.clear_memory()
         st.rerun()
+
+    # Chat Memory Search
+    st.markdown("---")
+    chat_search = st.text_input(t["sidebar_search_chats"], placeholder="...")
 
     if st.session_state.user_role in ["Admin", "Manager"]:
         with st.expander(t["sidebar_ingestion"], expanded=False):
@@ -412,10 +437,17 @@ if "view_doc" in st.session_state and st.session_state.view_doc:
 
 with tab_chat:
     # Area Selection for Queries
+    area_options = ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"])
+    default_area = "General"
+
+    # Contextual Role Switching logic:
+    if st.session_state.get("assistant_type") in area_options:
+        default_area = st.session_state.assistant_type
+
     st.session_state.knowledge_area = st.segmented_control(
         t["query_area"],
-        ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"]),
-        default="General"
+        area_options,
+        default=default_area
     )
 
     # Groq API Key Check
@@ -453,16 +485,39 @@ with tab_chat:
                     st.session_state.temp_prompt = example
                     st.rerun()
 
+        # Filter messages if search is active
+        display_messages = st.session_state.messages
+        if chat_search:
+            display_messages = [m for m in st.session_state.messages if chat_search.lower() in m["content"].lower()]
+
         # Display chat messages
-        for message in st.session_state.messages:
+        for message in display_messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
                 if message.get("search_query"):
                     st.caption(f"{t['search_query']} _{message['search_query']}_")
+
+                if message["role"] == "assistant":
+                    # Trust Indicator Logic for history
+                    faith_str = message.get("faithfulness", "0%").replace("%", "")
+                    try:
+                        faith_val = int(faith_str)
+                    except:
+                        faith_val = 0
+
+                    if faith_val > 0:
+                        bar_color = "#10B981" if faith_val >= 90 else "#F59E0B" if faith_val >= 70 else "#EF4444"
+                        st.markdown(f"""
+                            <div class='trust-bar-container'>
+                                <div class='trust-bar-fill' style='width: {faith_val}%; background-color: {bar_color};'></div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
                 if message.get("sources"):
                     with st.expander(t["sources"]):
                         for source in message["sources"]:
                             st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
+
                 if message["role"] == "assistant":
                     st.download_button(
                         label=t["download_answer"],
@@ -498,6 +553,21 @@ with tab_chat:
 
                             if response_data.get("search_query"):
                                 st.caption(f"{t['search_query']} _{response_data['search_query']}_")
+
+                            # Trust Indicator Logic
+                            faith_str = response_data.get("faithfulness", "0%").replace("%", "")
+                            try:
+                                faith_val = int(faith_str)
+                            except:
+                                faith_val = 0
+
+                            bar_color = "#10B981" if faith_val >= 90 else "#F59E0B" if faith_val >= 70 else "#EF4444"
+
+                            st.markdown(f"""
+                                <div class='trust-bar-container'>
+                                    <div class='trust-bar-fill' style='width: {faith_val}%; background-color: {bar_color};'></div>
+                                </div>
+                            """, unsafe_allow_html=True)
 
                             sources = response_data.get("sources", [])
                             if sources:
@@ -546,13 +616,24 @@ with tab_kb:
 
     st.subheader(t["kb_library"])
     if st.session_state.agent:
-        docs = os.listdir("data/documents") if os.path.exists("data/documents") else []
+        docs_path = "data/documents"
+        docs = os.listdir(docs_path) if os.path.exists(docs_path) else []
         if docs:
             # Grid layout for library
             cols = st.columns(3)
             for i, doc in enumerate(docs):
+                fpath = os.path.join(docs_path, doc)
+                stats = os.stat(fpath)
+                mtime = time.strftime('%Y-%m-%d', time.localtime(stats.st_mtime))
+                fsize = f"{stats.st_size / 1024:.1f} KB"
+
                 with cols[i % 3]:
-                    st.markdown(f"<div class='doc-item'>{doc} <br><span style='font-size: 10px; color: #10B981;'>✅ Indexed</span></div>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                        <div class='doc-item' title='{t["uploaded_date"]}: {mtime} | {t["file_size"]}: {fsize}'>
+                            {doc} <br>
+                            <span style='font-size: 10px; color: #10B981;'>✅ Indexed</span>
+                        </div>
+                    """, unsafe_allow_html=True)
         else:
             st.info(t["kb_empty"])
 

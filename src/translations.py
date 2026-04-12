@@ -67,7 +67,10 @@ TRANSLATIONS = {
         "example_3": "Extract key deadlines and action items",
         "example_4": "Compare the different policies mentioned",
         "kb_cleared": "Knowledge base cleared successfully!",
-        "api_key_success": "API Key set successfully!"
+        "api_key_success": "API Key set successfully!",
+        "sidebar_search_chats": "🔍 Search Previous Chats",
+        "uploaded_date": "Uploaded",
+        "file_size": "Size"
     },
     "🇩🇪 German": {
         "welcome_title": "Willkommen bei Ihrer privaten Wissens-KI",
@@ -137,7 +140,10 @@ TRANSLATIONS = {
         "example_3": "Wichtige Fristen und Aktionspunkte extrahieren",
         "example_4": "Vergleichen Sie die verschiedenen genannten Richtlinien",
         "kb_cleared": "Wissensdatenbank erfolgreich gelöscht!",
-        "api_key_success": "API-Schlüssel erfolgreich gesetzt!"
+        "api_key_success": "API-Schlüssel erfolgreich gesetzt!",
+        "sidebar_search_chats": "🔍 Vorherige Chats suchen",
+        "uploaded_date": "Hochgeladen",
+        "file_size": "Größe"
     },
     "🇫🇷 French": {
         "welcome_title": "Bienvenue dans votre IA de connaissance privée",
@@ -207,6 +213,9 @@ TRANSLATIONS = {
         "example_3": "Extraire les échéances et les mesures à prendre",
         "example_4": "Comparer les différentes politiques mentionnées",
         "kb_cleared": "Base de connaissances effacée avec succès !",
-        "api_key_success": "Clé API définie avec succès !"
+        "api_key_success": "Clé API définie avec succès !",
+        "sidebar_search_chats": "🔍 Rechercher les chats précédents",
+        "uploaded_date": "Téléchargé",
+        "file_size": "Taille"
     }
 }
