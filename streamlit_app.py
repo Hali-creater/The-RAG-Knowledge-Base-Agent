@@ -277,10 +277,39 @@ with st.sidebar:
 
             st.markdown("---")
             st.markdown(f"**{t['sidebar_connectors']}**")
-            c1, c2, c3 = st.columns(3)
-            c1.button("☁️ SP", help="SharePoint (Coming Soon)")
-            c2.button("📦 OD", help="OneDrive (Coming Soon)")
-            c3.button("📂 GD", help="Google Drive (Coming Soon)")
+
+            with st.expander(t["connector_cloud_title"], expanded=False):
+                conn_type = st.radio(t["connector_provider"], ["GDrive", "OneDrive", "SharePoint"])
+
+                if conn_type == "GDrive":
+                    folder_id = st.text_input(t["connector_gdrive_id"])
+                    if st.button(t["connector_process"], key="btn_gdrive"):
+                        with st.spinner(t["analyzing"]):
+                            try:
+                                res = st.session_state.agent.ingest_from_connector("GDrive", {"folder_id": folder_id}, knowledge_area=selected_area)
+                                st.success(f"Ingested {res['chunks']} chunks!")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
+                elif conn_type == "OneDrive":
+                    drive_id = st.text_input(t["connector_onedrive_id"])
+                    if st.button(t["connector_process"], key="btn_onedrive"):
+                         with st.spinner(t["analyzing"]):
+                            try:
+                                res = st.session_state.agent.ingest_from_connector("OneDrive", {"drive_id": drive_id}, knowledge_area=selected_area)
+                                st.success(f"Ingested {res['chunks']} chunks!")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
+                elif conn_type == "SharePoint":
+                    site_id = st.text_input(t["connector_sharepoint_id"])
+                    if st.button(t["connector_process"], key="btn_sharepoint"):
+                         with st.spinner(t["analyzing"]):
+                            try:
+                                res = st.session_state.agent.ingest_from_connector("SharePoint", {"site_id": site_id}, knowledge_area=selected_area)
+                                st.success(f"Ingested {res['chunks']} chunks!")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
 
             uploaded_files = st.file_uploader(
                 t["sidebar_drop"],
