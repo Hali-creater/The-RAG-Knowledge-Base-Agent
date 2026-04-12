@@ -23,3 +23,4 @@ altair<5
 watchdog
 pytest
 loguru
+streamlit-javascript

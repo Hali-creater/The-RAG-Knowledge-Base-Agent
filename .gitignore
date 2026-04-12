@@ -7,3 +7,6 @@ uploads/
 data/documents/
 server.log
 .DS_Store
+logs/
+data/
+streamlit.log

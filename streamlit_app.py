@@ -1,9 +1,11 @@
 import streamlit as st
 import os
 import shutil
+from streamlit_javascript import st_javascript
 from src.rag_agent import RAGAgent
 from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
 from src.audit_logger import get_audit_logs
+from src.translations import TRANSLATIONS
 
 # Set page config
 st.set_page_config(
@@ -208,25 +210,47 @@ if "knowledge_area" not in st.session_state:
 if "assistant_type" not in st.session_state:
     st.session_state.assistant_type = "General"
 
+if "language" not in st.session_state:
+    # Auto-detection logic
+    user_lang = st_javascript("""window.navigator.language""")
+    if user_lang:
+        if user_lang.startswith("de"):
+            st.session_state.language = "🇩🇪 German"
+        elif user_lang.startswith("fr"):
+            st.session_state.language = "🇫🇷 French"
+        else:
+            st.session_state.language = "🇺🇸 English"
+    else:
+        st.session_state.language = "🇺🇸 English"
+
 # Sidebar: Control Panel
 with st.sidebar:
     st.markdown("### ⚙️ System Control")
 
-    with st.expander("👤 User & Model Settings", expanded=False):
+    # Language Selector
+    selected_lang = st.selectbox(
+        "🌐 Language",
+        options=list(TRANSLATIONS.keys()),
+        index=list(TRANSLATIONS.keys()).index(st.session_state.language)
+    )
+    st.session_state.language = selected_lang
+    t = TRANSLATIONS[st.session_state.language]
+
+    with st.expander(t["sidebar_settings"], expanded=False):
         st.session_state.user_role = st.selectbox(
-            "Select Your Role",
+            t["sidebar_role"],
             ["Admin", "Manager", "Employee"],
             index=2
         )
 
         st.session_state.assistant_type = st.selectbox(
-            "AI Assistant Persona",
+            t["sidebar_persona"],
             ["General", "HR", "Legal", "Finance", "Comparative"],
             index=0
         )
 
         selected_model = st.selectbox(
-            "LLM Model (Model Sovereignty)",
+            t["sidebar_model"],
             ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"],
             index=0
         )
@@ -236,37 +260,37 @@ with st.sidebar:
 
     st.markdown("---")
 
-    if st.button("🗑️ New Chat / Clear", use_container_width=True, type="secondary"):
+    if st.button(t["sidebar_new_chat"], use_container_width=True, type="secondary"):
         st.session_state.messages = []
         if st.session_state.agent:
             st.session_state.agent.memory_manager.clear_memory()
         st.rerun()
 
     if st.session_state.user_role in ["Admin", "Manager"]:
-        with st.expander("📁 Knowledge Ingestion", expanded=False):
+        with st.expander(t["sidebar_ingestion"], expanded=False):
             selected_area = st.selectbox(
-                "Target Area",
+                t["sidebar_target_area"],
                 ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"]),
                 index=0,
                 key="side_kb_area"
             )
 
             st.markdown("---")
-            st.markdown("**Enterprise Connectors**")
+            st.markdown(f"**{t['sidebar_connectors']}**")
             c1, c2, c3 = st.columns(3)
             c1.button("☁️ SP", help="SharePoint (Coming Soon)")
             c2.button("📦 OD", help="OneDrive (Coming Soon)")
             c3.button("📂 GD", help="Google Drive (Coming Soon)")
 
             uploaded_files = st.file_uploader(
-                "Drop documents here",
+                t["sidebar_drop"],
                 type=["pdf", "docx", "txt", "md"],
                 accept_multiple_files=True,
                 key="side_uploader"
             )
 
             if uploaded_files:
-                if st.button("✨ Process Knowledge", use_container_width=True, type="primary", key="side_process_btn"):
+                if st.button(t["sidebar_process"], use_container_width=True, type="primary", key="side_process_btn"):
                     if st.session_state.agent:
                         with st.spinner("Analyzing..."):
                             success_count = 0
@@ -309,15 +333,15 @@ with st.sidebar:
                 # Clear after showing once if desired, but user asked for a note under button
 
     if st.session_state.user_role == "Admin":
-        if st.button("🔥 Reset Knowledge Base", use_container_width=True, type="secondary"):
+        if st.button(t["sidebar_reset"], use_container_width=True, type="secondary"):
             if st.session_state.agent:
                 if st.session_state.agent.clear_database():
                     st.success("Knowledge base cleared successfully!")
                     st.rerun()
 
     st.markdown("---")
-    with st.expander("🔐 Local Deployment"):
-        st.info("Tier 3 Enterprise Feature: This stack is ready for VPC deployment. No data leaves your perimeter.")
+    with st.expander(t["sidebar_local"]):
+        st.info(t["sidebar_vpc_info"])
 
     st.markdown("---")
     st.markdown("""
@@ -329,71 +353,71 @@ with st.sidebar:
 # Main Interface Header
 col1, col2 = st.columns([0.7, 0.3])
 with col1:
-    st.markdown("<h1>Knowledge AI Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 18px; margin-top: -10px; color: #475569; font-weight: 800;'>Private • Secure • Business Ready</p>", unsafe_allow_html=True)
+    st.markdown(f"<h1>{t['header_title']}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size: 18px; margin-top: -10px; color: #475569; font-weight: 800;'>{t['header_subtitle']}</p>", unsafe_allow_html=True)
 
 with col2:
     if os.getenv("GROQ_API_KEY"):
-        st.markdown("<div class='status-badge status-online'>● Groq Engine Online</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='status-badge status-online'>{t['status_online']}</div>", unsafe_allow_html=True)
     else:
-        st.markdown("<div class='status-badge status-offline'>○ Groq Engine Offline</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='status-badge status-offline'>{t['status_offline']}</div>", unsafe_allow_html=True)
 
 # Tabs for Organization
-tab_chat, tab_kb, tab_analytics = st.tabs(["💬 Chat", "📚 Knowledge Base", "📊 Analytics"])
+tab_chat, tab_kb, tab_analytics = st.tabs([t["tab_chat"], t["tab_kb"], t["tab_analytics"]])
 
 # Side-by-Side Viewer Logic
 if "view_doc" in st.session_state and st.session_state.view_doc:
     with st.sidebar:
         st.markdown("---")
-        st.markdown(f"### 📄 Document Viewer")
-        st.info(f"Viewing: **{st.session_state.view_doc['file']}** (Page {st.session_state.view_doc['page']})")
+        st.markdown(f"### {t['doc_viewer']}")
+        st.info(f"{t['viewing']}: **{st.session_state.view_doc['file']}** ({t['page']} {st.session_state.view_doc['page']})")
         # Placeholder for actual PDF rendering
         st.markdown("""
             <div style='height: 300px; background: #eee; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 700; text-align: center; padding: 10px;'>
                 PDF Preview Content with Highlighted Text<br>(VPC Deployment Required for Full PDF Rendering)
             </div>
         """, unsafe_allow_html=True)
-        if st.button("Close Viewer"):
+        if st.button(t["close_viewer"]):
             st.session_state.view_doc = None
             st.rerun()
 
 with tab_chat:
     # Area Selection for Queries
     st.session_state.knowledge_area = st.segmented_control(
-        "Query Knowledge Area",
+        t["query_area"],
         ROLE_PERMISSIONS.get(st.session_state.user_role, ["General"]),
         default="General"
     )
 
     # Groq API Key Check
     if not os.getenv("GROQ_API_KEY"):
-        st.info("💡 **Welcome!** To get started, please provide your Groq API Key.")
-        groq_key = st.text_input("Enter Groq API Key", type="password")
+        st.info(t["api_key_welcome"])
+        groq_key = st.text_input(t["api_key_label"], type="password")
         if groq_key:
             os.environ["GROQ_API_KEY"] = groq_key
-            st.success("API Key set successfully!")
+            st.success(t["api_key_success"])
             st.rerun()
 
     # Only proceed with chat if API key is present
     if not os.getenv("GROQ_API_KEY"):
-        st.warning("Please provide a Groq API Key to enable the AI Chat.")
+        st.warning(t["api_key_warning"])
     else:
         # Display example questions if no messages
         if not st.session_state.messages and st.session_state.agent:
-            st.markdown("""
+            st.markdown(f"""
                 <div class='glass-card' style='text-align: center; margin: 2rem 0;'>
-                    <h3>Welcome to your Private Knowledge AI</h3>
-                    <p>Ask questions about your documents and get instant, cited answers.</p>
+                    <h3>{t['welcome_title']}</h3>
+                    <p>{t['welcome_subtitle']}</p>
                 </div>
             """, unsafe_allow_html=True)
 
-            st.markdown("### 💡 Try asking:")
+            st.markdown(f"### {t['try_asking']}")
             cols = st.columns(2)
             examples = [
-                "Summarize the key insights from our documents",
-                "What are the main risks identified?",
-                "Extract key deadlines and action items",
-                "Compare the different policies mentioned"
+                t["example_1"],
+                t["example_2"],
+                t["example_3"],
+                t["example_4"]
             ]
             for i, example in enumerate(examples):
                 if cols[i % 2].button(example, use_container_width=True):
@@ -405,14 +429,14 @@ with tab_chat:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
                 if message.get("search_query"):
-                    st.caption(f"🔍 **Standalone Search Query:** _{message['search_query']}_")
+                    st.caption(f"{t['search_query']} _{message['search_query']}_")
                 if message.get("sources"):
-                    with st.expander("📚 Sources"):
+                    with st.expander(t["sources"]):
                         for source in message["sources"]:
                             st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
                 if message["role"] == "assistant":
                     st.download_button(
-                        label="📥 Download Answer",
+                        label=t["download_answer"],
                         data=message["content"],
                         file_name="ai_response.txt",
                         mime="text/plain",
@@ -420,7 +444,7 @@ with tab_chat:
                     )
 
         # Chat input
-        prompt = st.chat_input("Ask a question about your knowledge core...")
+        prompt = st.chat_input(t["cta"])
         if "temp_prompt" in st.session_state:
             prompt = st.session_state.temp_prompt
             del st.session_state.temp_prompt
@@ -432,27 +456,28 @@ with tab_chat:
                     st.markdown(prompt)
 
                 with st.chat_message("assistant"):
-                    with st.spinner("🧠 Analyzing your knowledge base..."):
+                    with st.spinner(t["analyzing"]):
                         try:
                             response_data = st.session_state.agent.answer_question(
                                 prompt,
                                 knowledge_area=st.session_state.knowledge_area,
-                                assistant_type=st.session_state.assistant_type
+                                assistant_type=st.session_state.assistant_type,
+                                language=st.session_state.language
                             )
                             full_response = response_data["answer"]
                             st.markdown(full_response)
 
                             if response_data.get("search_query"):
-                                st.caption(f"🔍 **Standalone Search Query:** _{response_data['search_query']}_")
+                                st.caption(f"{t['search_query']} _{response_data['search_query']}_")
 
                             sources = response_data.get("sources", [])
                             if sources:
                                 metrics_cols = st.columns(2)
-                                metrics_cols[0].metric("Confidence", response_data.get("confidence", "N/A"))
-                                metrics_cols[1].metric("Faithfulness", response_data.get("faithfulness", "N/A"))
+                                metrics_cols[0].metric(t["confidence"], response_data.get("confidence", "N/A"))
+                                metrics_cols[1].metric(t["faithfulness"], response_data.get("faithfulness", "N/A"))
 
-                                st.info(f"✨ Answer generated from {len(sources)} sources")
-                                with st.expander("📚 Sources & Deep Link"):
+                                st.info(f"{t['answer_generated_from']} {len(sources)} {t['sources'].lower()}")
+                                with st.expander(t["sources_and_deep_link"]):
                                     for source in sources:
                                         # Parse source to get filename and page
                                         try:
@@ -465,13 +490,13 @@ with tab_chat:
                                             page_num = "1"
 
                                         st.markdown(f"<div class='doc-item'>{source}</div>", unsafe_allow_html=True)
-                                        if st.button(f"🔎 View {source}", key=f"view_{source}_{len(st.session_state.messages)}"):
+                                        if st.button(f"{t['view_source']} {source}", key=f"view_{source}_{len(st.session_state.messages)}"):
                                             st.session_state.view_doc = {"file": fname, "page": page_num}
 
                             if st.session_state.user_role == "Admin":
-                                if st.button("✅ Verify as Gold Standard", key=f"verify_{len(st.session_state.messages)}"):
+                                if st.button(t["verify_gold"], key=f"verify_{len(st.session_state.messages)}"):
                                     st.session_state.agent.verify_answer(prompt, full_response)
-                                    st.success("Response saved as Gold Standard!")
+                                    st.success(t["gold_saved"])
 
                             st.session_state.messages.append({
                                 "role": "assistant",
@@ -488,9 +513,9 @@ with tab_chat:
                 st.error("Agent not initialized.")
 
 with tab_kb:
-    st.markdown("## 📁 Knowledge Management")
+    st.markdown(f"## {t['kb_management']}")
 
-    st.subheader("📚 Current Library")
+    st.subheader(t["kb_library"])
     if st.session_state.agent:
         docs = os.listdir("data/documents") if os.path.exists("data/documents") else []
         if docs:
@@ -500,24 +525,33 @@ with tab_kb:
                 with cols[i % 3]:
                     st.markdown(f"<div class='doc-item'>{doc} <br><span style='font-size: 10px; color: #10B981;'>✅ Indexed</span></div>", unsafe_allow_html=True)
         else:
-            st.info("No sources loaded yet. Use the sidebar to upload documents.")
+            st.info(t["kb_empty"])
 
 with tab_analytics:
-    st.markdown("## 📊 System Insights & Audit Trails")
+    st.markdown(f"## {t['analytics_title']}")
     if st.session_state.user_role == "Admin":
         c1, c2, c3 = st.columns(3)
-        c1.metric("Most Asked Topic", "HR Policy")
-        c2.metric("Active Sources", len(os.listdir("data/documents")) if os.path.exists("data/documents") else 0)
-        c3.metric("Daily Queries", "142")
+        c1.metric(t["most_asked_topic"], "HR Policy")
+        c2.metric(t["active_sources"], len(os.listdir("data/documents")) if os.path.exists("data/documents") else 0)
+        c3.metric(t["daily_queries"], "142")
 
-        st.markdown("### 📋 Recent Audit Logs")
+        st.markdown(f"### {t['recent_audit_logs']}")
         logs = get_audit_logs(limit=10)
         if logs:
             st.table(logs)
         else:
-            st.info("No audit logs found.")
+            st.info(t["no_audit_logs"])
 
-        st.markdown("### Query Volume Trends")
+        st.markdown(f"### {t['query_trends']}")
         st.line_chart([10, 25, 15, 40, 35, 60, 45])
     else:
-        st.info("Analytics and Audit Trails are only available for Admin users.")
+        st.info(t["analytics_admin_only"])
+
+# GDPR Footer
+st.markdown("---")
+st.markdown(f"""
+    <div style='text-align: center; padding: 1rem;'>
+        <p style='font-size: 14px; color: #64748B; font-weight: 700;'>{t['gdpr_footer']}</p>
+        <p style='font-size: 12px; color: #64748B; font-weight: 700;'>Private Knowledge Engine<br>v2.1.0 • Enterprise Ready</p>
+    </div>
+""", unsafe_allow_html=True)
