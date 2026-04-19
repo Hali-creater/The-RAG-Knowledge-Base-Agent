@@ -307,12 +307,15 @@ with st.sidebar:
                 conn_type = st.radio(t["connector_provider"], ["GDrive", "OneDrive", "SharePoint"])
 
                 if conn_type == "GDrive":
-                    folder_id = st.text_input(t["connector_gdrive_id"])
+                    gdrive_input = st.text_input(t["connector_gdrive_id"])
                     if st.button(t["connector_process"], key="btn_gdrive"):
                         with st.spinner(t["analyzing"]):
                             try:
-                                res = st.session_state.agent.ingest_from_connector("GDrive", {"folder_id": folder_id}, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                res = st.session_state.agent.ingest_from_connector("GDrive", {"folder_id": gdrive_input}, knowledge_area=selected_area)
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or the link.")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
@@ -322,7 +325,10 @@ with st.sidebar:
                          with st.spinner(t["analyzing"]):
                             try:
                                 res = st.session_state.agent.ingest_from_connector("OneDrive", {"drive_id": drive_id}, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or ID.")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
@@ -332,7 +338,10 @@ with st.sidebar:
                          with st.spinner(t["analyzing"]):
                             try:
                                 res = st.session_state.agent.ingest_from_connector("SharePoint", {"site_id": site_id}, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or ID.")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
