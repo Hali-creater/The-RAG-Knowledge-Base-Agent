@@ -3,6 +3,7 @@ import os
 import shutil
 from streamlit_javascript import st_javascript
 from src.rag_agent import RAGAgent
+from src.connectors import ConnectorManager
 from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
 from src.audit_logger import get_audit_logs
 from src.translations import TRANSLATIONS
@@ -307,15 +308,39 @@ with st.sidebar:
                 conn_type = st.radio(t["connector_provider"], ["GDrive", "OneDrive", "SharePoint"])
 
                 if conn_type == "GDrive":
+                    creds_path = st.text_input(t["connector_gdrive_creds"], placeholder="credentials.json", key="gdrive_creds_path")
+                    token_path = st.text_input(t["connector_gdrive_token"], placeholder="token.json", key="gdrive_token_path")
+
+                    is_connected = os.path.exists(token_path if token_path else "token.json")
+                    status_color = "green" if is_connected else "red"
+                    status_text = t["connector_status_connected"] if is_connected else t["connector_status_disconnected"]
+                    st.markdown(f"Status: <span style='color:{status_color}'>{status_text}</span>", unsafe_allow_html=True)
+
+                    if st.button(t["connector_gdrive_btn"], use_container_width=True):
+                        try:
+                            auth_url = ConnectorManager.get_gdrive_auth_url(creds_path if creds_path else "credentials.json")
+                            st.markdown(f"1. [Click here to authorize]({auth_url})")
+                            st.info("2. Copy the code and paste it below.")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+                    auth_code = st.text_input(t["connector_gdrive_code_label"], type="password")
+                    if auth_code:
+                        if st.button("Confirm Code"):
+                            try:
+                                ConnectorManager.exchange_gdrive_code(creds_path if creds_path else "credentials.json", auth_code, token_path if token_path else "token.json")
+                                st.success("Connected successfully!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
+                    st.markdown("---")
                     folder_id = st.text_input(t["connector_gdrive_id"])
-                    creds_path = st.text_input(t["connector_gdrive_creds"], placeholder="credentials.json")
-                    token_path = st.text_input(t["connector_gdrive_token"], placeholder="token.json")
                     if st.button(t["connector_process"], key="btn_gdrive"):
                         with st.spinner(t["analyzing"]):
                             try:
                                 params = {
                                     "folder_id": folder_id,
-                                    "credentials_path": creds_path if creds_path else None,
                                     "token_path": token_path if token_path else "token.json"
                                 }
                                 res = st.session_state.agent.ingest_from_connector("GDrive", params, knowledge_area=selected_area)
@@ -327,21 +352,77 @@ with st.sidebar:
                                     st.error(f"Error: {e}")
 
                 elif conn_type == "OneDrive":
+                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password")
+                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password")
+
+                    is_ms_connected = os.path.exists("o365_token.txt")
+                    ms_status_color = "green" if is_ms_connected else "red"
+                    ms_status_text = t["connector_status_connected"] if is_ms_connected else t["connector_status_disconnected"]
+                    st.markdown(f"Status: <span style='color:{ms_status_color}'>{ms_status_text}</span>", unsafe_allow_html=True)
+
+                    if st.button(t["connector_ms_btn"], use_container_width=True):
+                        try:
+                            auth_url = ConnectorManager.get_ms_auth_url(ms_client_id, ms_client_secret)
+                            st.markdown(f"1. [Click here to authorize]({auth_url})")
+                            st.info("2. After authorizing, you will be redirected to a blank page. Copy the FULL URL of that page and paste it below.")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+                    ms_code_url = st.text_input(t["connector_ms_url_label"])
+                    if ms_code_url:
+                        if st.button("Confirm Microsoft Connection"):
+                            try:
+                                if ConnectorManager.exchange_ms_code(ms_client_id, ms_client_secret, ms_code_url):
+                                    st.success("Microsoft Connected!")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to authenticate.")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
+                    st.markdown("---")
                     drive_id = st.text_input(t["connector_onedrive_id"])
                     if st.button(t["connector_process"], key="btn_onedrive"):
                          with st.spinner(t["analyzing"]):
                             try:
-                                res = st.session_state.agent.ingest_from_connector("OneDrive", {"drive_id": drive_id}, knowledge_area=selected_area)
+                                params = {
+                                    "drive_id": drive_id,
+                                    "ms_client_id": ms_client_id,
+                                    "ms_client_secret": ms_client_secret
+                                }
+                                res = st.session_state.agent.ingest_from_connector("OneDrive", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
                 elif conn_type == "SharePoint":
+                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password")
+                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password")
+
+                    is_ms_connected = os.path.exists("o365_token.txt")
+                    ms_status_color = "green" if is_ms_connected else "red"
+                    ms_status_text = t["connector_status_connected"] if is_ms_connected else t["connector_status_disconnected"]
+                    st.markdown(f"Status: <span style='color:{ms_status_color}'>{ms_status_text}</span>", unsafe_allow_html=True)
+
+                    # (Same logic as OneDrive for auth)
+                    if st.button(t["connector_ms_btn"], key="btn_ms_auth_sp", use_container_width=True):
+                        try:
+                            auth_url = ConnectorManager.get_ms_auth_url(ms_client_id, ms_client_secret)
+                            st.markdown(f"1. [Click here to authorize]({auth_url})")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+                    st.markdown("---")
                     site_id = st.text_input(t["connector_sharepoint_id"])
                     if st.button(t["connector_process"], key="btn_sharepoint"):
                          with st.spinner(t["analyzing"]):
                             try:
-                                res = st.session_state.agent.ingest_from_connector("SharePoint", {"site_id": site_id}, knowledge_area=selected_area)
+                                params = {
+                                    "site_id": site_id,
+                                    "ms_client_id": ms_client_id,
+                                    "ms_client_secret": ms_client_secret
+                                }
+                                res = st.session_state.agent.ingest_from_connector("SharePoint", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
                                 st.error(f"Error: {e}")
