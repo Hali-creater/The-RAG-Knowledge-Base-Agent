@@ -308,13 +308,23 @@ with st.sidebar:
 
                 if conn_type == "GDrive":
                     folder_id = st.text_input(t["connector_gdrive_id"])
+                    creds_path = st.text_input(t["connector_gdrive_creds"], placeholder="credentials.json")
+                    token_path = st.text_input(t["connector_gdrive_token"], placeholder="token.json")
                     if st.button(t["connector_process"], key="btn_gdrive"):
                         with st.spinner(t["analyzing"]):
                             try:
-                                res = st.session_state.agent.ingest_from_connector("GDrive", {"folder_id": folder_id}, knowledge_area=selected_area)
+                                params = {
+                                    "folder_id": folder_id,
+                                    "credentials_path": creds_path if creds_path else None,
+                                    "token_path": token_path if token_path else "token.json"
+                                }
+                                res = st.session_state.agent.ingest_from_connector("GDrive", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
-                                st.error(f"Error: {e}")
+                                if "metadata.google.internal" in str(e):
+                                    st.error("Authentication Error: Google Cloud metadata server unavailable. Please provide 'credentials.json' or a Service Account key for local authentication.")
+                                else:
+                                    st.error(f"Error: {e}")
 
                 elif conn_type == "OneDrive":
                     drive_id = st.text_input(t["connector_onedrive_id"])

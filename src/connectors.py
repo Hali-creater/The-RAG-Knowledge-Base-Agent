@@ -6,22 +6,21 @@ from loguru import logger
 
 class ConnectorManager:
     @staticmethod
-    def load_from_gdrive(folder_id: str, service_account_path: str = None) -> List[Document]:
+    def load_from_gdrive(folder_id: str, service_account_path: str = None, credentials_path: str = None, token_path: str = "token.json") -> List[Document]:
         """Load documents from a Google Drive folder."""
         logger.info(f"Loading from GDrive folder: {folder_id}")
         try:
+            kwargs = {
+                "folder_id": folder_id,
+                "recursive": False
+            }
             if service_account_path and os.path.exists(service_account_path):
-                loader = GoogleDriveLoader(
-                    folder_id=folder_id,
-                    service_account_key=service_account_path,
-                    recursive=False
-                )
-            else:
-                # Fallback to default credentials or token.json logic
-                loader = GoogleDriveLoader(
-                    folder_id=folder_id,
-                    recursive=False
-                )
+                kwargs["service_account_key"] = service_account_path
+            elif credentials_path and os.path.exists(credentials_path):
+                kwargs["credentials_path"] = credentials_path
+                kwargs["token_path"] = token_path
+
+            loader = GoogleDriveLoader(**kwargs)
             return loader.load()
         except Exception as e:
             logger.error(f"GDrive Load Error: {e}")
