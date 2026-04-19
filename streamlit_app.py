@@ -307,7 +307,6 @@ with st.sidebar:
                 conn_type = st.radio(t["connector_provider"], ["GDrive", "OneDrive", "SharePoint"])
 
                 if conn_type == "GDrive":
- fix-gdrive-auth-timeout-17440176441863980092
                     service_account_path = st.text_input(t["connector_gdrive_creds"], placeholder="service_account.json", key="gdrive_creds_path")
                     token_path = st.text_input(t["connector_gdrive_token"], placeholder="token.json", key="gdrive_token_path")
 
@@ -346,17 +345,6 @@ with st.sidebar:
                                 }
                                 res = st.session_state.agent.ingest_from_connector("GDrive", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
-
-                    gdrive_input = st.text_input(t["connector_gdrive_id"])
-                    if st.button(t["connector_process"], key="btn_gdrive"):
-                        with st.spinner(t["analyzing"]):
-                            try:
-                                res = st.session_state.agent.ingest_from_connector("GDrive", {"folder_id": gdrive_input}, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or the link.")
- main
                             except Exception as e:
                                 if "metadata.google.internal" in str(e):
                                     st.error("Authentication Error: Google Cloud metadata server unavailable. Please provide 'credentials.json' or a Service Account key for local authentication.")
@@ -397,7 +385,6 @@ with st.sidebar:
                     if st.button(t["connector_process"], key="btn_onedrive"):
                          with st.spinner(t["analyzing"]):
                             try:
- fix-gdrive-auth-timeout-17440176441863980092
                                 params = {
                                     "drive_id": drive_id,
                                     "ms_client_id": ms_client_id,
@@ -405,13 +392,6 @@ with st.sidebar:
                                 }
                                 res = st.session_state.agent.ingest_from_connector("OneDrive", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
-
-                                res = st.session_state.agent.ingest_from_connector("OneDrive", {"drive_id": drive_id}, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or ID.")
- main
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
@@ -449,7 +429,6 @@ with st.sidebar:
                     if st.button(t["connector_process"], key="btn_sharepoint"):
                          with st.spinner(t["analyzing"]):
                             try:
- fix-gdrive-auth-timeout-17440176441863980092
                                 params = {
                                     "site_id": site_id,
                                     "ms_client_id": ms_client_id,
@@ -457,13 +436,6 @@ with st.sidebar:
                                 }
                                 res = st.session_state.agent.ingest_from_connector("SharePoint", params, knowledge_area=selected_area)
                                 st.success(f"Ingested {res['chunks']} chunks!")
-
-                                res = st.session_state.agent.ingest_from_connector("SharePoint", {"site_id": site_id}, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or ID.")
- main
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
