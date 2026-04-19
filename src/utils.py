@@ -25,6 +25,27 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'md'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+import re
+
+def extract_id_from_url(url: str) -> str:
+    """Extract Folder or File ID from a GDrive URL."""
+    # Folder ID: .../folders/ID
+    folder_match = re.search(r'folders/([a-zA-Z0-9_-]+)', url)
+    if folder_match:
+        return folder_match.group(1)
+
+    # File/Doc ID: .../d/ID/...
+    file_match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    if file_match:
+        return file_match.group(1)
+
+    # Query param: ...?id=ID
+    query_match = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', url)
+    if query_match:
+        return query_match.group(1)
+
+    return url # Return as-is if no match (assume it's already an ID)
+
 def get_file_hash(filepath):
     """Generate SHA-256 hash of file content for deduplication."""
     hasher = hashlib.sha256()

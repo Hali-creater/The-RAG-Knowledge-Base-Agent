@@ -1,10 +1,8 @@
 import streamlit as st
 import os
 import shutil
-import time
 from streamlit_javascript import st_javascript
 from src.rag_agent import RAGAgent
-from src.connectors import ConnectorManager
 from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
 from src.audit_logger import get_audit_logs
 from src.translations import TRANSLATIONS
@@ -309,7 +307,7 @@ with st.sidebar:
                 conn_type = st.radio(t["connector_provider"], ["GDrive", "OneDrive", "SharePoint"])
 
                 if conn_type == "GDrive":
-                    creds_path = st.text_input(t["connector_gdrive_creds"], placeholder="credentials.json", key="gdrive_creds_path")
+                    service_account_path = st.text_input(t["connector_gdrive_creds"], placeholder="service_account.json", key="gdrive_creds_path")
                     token_path = st.text_input(t["connector_gdrive_token"], placeholder="token.json", key="gdrive_token_path")
 
                     is_connected = os.path.exists(token_path if token_path else "token.json")
@@ -319,7 +317,7 @@ with st.sidebar:
 
                     if st.button(t["connector_gdrive_btn"], use_container_width=True):
                         try:
-                            auth_url = ConnectorManager.get_gdrive_auth_url(creds_path if creds_path else "credentials.json")
+                            auth_url = ConnectorManager.get_gdrive_auth_url(service_account_path if service_account_path else "credentials.json")
                             st.markdown(f"1. [Click here to authorize]({auth_url})")
                             st.info("2. Copy the code and paste it below.")
                         except Exception as e:
@@ -329,26 +327,24 @@ with st.sidebar:
                     if auth_code:
                         if st.button("Confirm Code"):
                             try:
-                                ConnectorManager.exchange_gdrive_code(creds_path if creds_path else "credentials.json", auth_code, token_path if token_path else "token.json")
+                                ConnectorManager.exchange_gdrive_code(service_account_path if service_account_path else "credentials.json", auth_code, token_path if token_path else "token.json")
                                 st.success("Connected successfully!")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
                     st.markdown("---")
-                    gdrive_input = st.text_input(t["connector_gdrive_id"])
+                    folder_id = st.text_input(t["connector_gdrive_id"])
                     if st.button(t["connector_process"], key="btn_gdrive"):
                         with st.spinner(t["analyzing"]):
                             try:
                                 params = {
-                                    "input_id": gdrive_input,
+                                    "folder_id": folder_id,
+                                    "service_account_path": service_account_path if service_account_path else None,
                                     "token_path": token_path if token_path else "token.json"
                                 }
                                 res = st.session_state.agent.ingest_from_connector("GDrive", params, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or the link.")
+                                st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
                                 if "metadata.google.internal" in str(e):
                                     st.error("Authentication Error: Google Cloud metadata server unavailable. Please provide 'credentials.json' or a Service Account key for local authentication.")
@@ -356,8 +352,8 @@ with st.sidebar:
                                     st.error(f"Error: {e}")
 
                 elif conn_type == "OneDrive":
-                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password")
-                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password")
+                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password", key="od_client_id")
+                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password", key="od_client_secret")
 
                     is_ms_connected = os.path.exists("o365_token.txt")
                     ms_status_color = "green" if is_ms_connected else "red"
@@ -395,16 +391,13 @@ with st.sidebar:
                                     "ms_client_secret": ms_client_secret
                                 }
                                 res = st.session_state.agent.ingest_from_connector("OneDrive", params, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or ID.")
+                                st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
                 elif conn_type == "SharePoint":
-                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password")
-                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password")
+                    ms_client_id = st.text_input("Microsoft Client ID", value=os.getenv("MS_CLIENT_ID", ""), type="password", key="sp_client_id")
+                    ms_client_secret = st.text_input("Microsoft Client Secret", value=os.getenv("MS_CLIENT_SECRET", ""), type="password", key="sp_client_secret")
 
                     is_ms_connected = os.path.exists("o365_token.txt")
                     ms_status_color = "green" if is_ms_connected else "red"
@@ -419,6 +412,18 @@ with st.sidebar:
                         except Exception as e:
                             st.error(f"Error: {e}")
 
+                    ms_code_url_sp = st.text_input(t["connector_ms_url_label"], key="sp_auth_url")
+                    if ms_code_url_sp:
+                        if st.button("Confirm Microsoft Connection", key="btn_confirm_ms_sp"):
+                            try:
+                                if ConnectorManager.exchange_ms_code(ms_client_id, ms_client_secret, ms_code_url_sp):
+                                    st.success("Microsoft Connected!")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to authenticate.")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
                     st.markdown("---")
                     site_id = st.text_input(t["connector_sharepoint_id"])
                     if st.button(t["connector_process"], key="btn_sharepoint"):
@@ -430,10 +435,7 @@ with st.sidebar:
                                     "ms_client_secret": ms_client_secret
                                 }
                                 res = st.session_state.agent.ingest_from_connector("SharePoint", params, knowledge_area=selected_area)
-                                if res['chunks'] > 0:
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                else:
-                                    st.warning("No document content found. Please check permissions or ID.")
+                                st.success(f"Ingested {res['chunks']} chunks!")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 

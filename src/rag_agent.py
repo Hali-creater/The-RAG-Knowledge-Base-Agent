@@ -163,7 +163,7 @@ class RAGAgent:
         try:
             if connector_type == "GDrive":
                 docs = ConnectorManager.load_from_gdrive(
-                    input_id=params.get("input_id"),
+                    input_id=params.get("folder_id") or params.get("input_id"),
                     service_account_path=params.get("service_account_path"),
                     token_path=params.get("token_path", "token.json")
                 )
