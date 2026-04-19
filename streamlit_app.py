@@ -1,11 +1,13 @@
 import streamlit as st
 import os
 import shutil
+import time
 from streamlit_javascript import st_javascript
 from src.rag_agent import RAGAgent
 from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
 from src.audit_logger import get_audit_logs
 from src.translations import TRANSLATIONS
+from src.connectors import ConnectorManager
 
 # Set page config
 st.set_page_config(
@@ -409,6 +411,7 @@ with st.sidebar:
                         try:
                             auth_url = ConnectorManager.get_ms_auth_url(ms_client_id, ms_client_secret)
                             st.markdown(f"1. [Click here to authorize]({auth_url})")
+                            st.info("2. After authorizing, you will be redirected to a blank page. Copy the FULL URL of that page and paste it below.")
                         except Exception as e:
                             st.error(f"Error: {e}")
 
