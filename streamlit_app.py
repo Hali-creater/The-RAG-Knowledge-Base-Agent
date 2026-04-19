@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import shutil
+import time
 from streamlit_javascript import st_javascript
 from src.rag_agent import RAGAgent
 from src.connectors import ConnectorManager
@@ -335,16 +336,19 @@ with st.sidebar:
                                 st.error(f"Error: {e}")
 
                     st.markdown("---")
-                    folder_id = st.text_input(t["connector_gdrive_id"])
+                    gdrive_input = st.text_input(t["connector_gdrive_id"])
                     if st.button(t["connector_process"], key="btn_gdrive"):
                         with st.spinner(t["analyzing"]):
                             try:
                                 params = {
-                                    "folder_id": folder_id,
+                                    "input_id": gdrive_input,
                                     "token_path": token_path if token_path else "token.json"
                                 }
                                 res = st.session_state.agent.ingest_from_connector("GDrive", params, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or the link.")
                             except Exception as e:
                                 if "metadata.google.internal" in str(e):
                                     st.error("Authentication Error: Google Cloud metadata server unavailable. Please provide 'credentials.json' or a Service Account key for local authentication.")
@@ -391,7 +395,10 @@ with st.sidebar:
                                     "ms_client_secret": ms_client_secret
                                 }
                                 res = st.session_state.agent.ingest_from_connector("OneDrive", params, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or ID.")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
@@ -423,7 +430,10 @@ with st.sidebar:
                                     "ms_client_secret": ms_client_secret
                                 }
                                 res = st.session_state.agent.ingest_from_connector("SharePoint", params, knowledge_area=selected_area)
-                                st.success(f"Ingested {res['chunks']} chunks!")
+                                if res['chunks'] > 0:
+                                    st.success(f"Ingested {res['chunks']} chunks!")
+                                else:
+                                    st.warning("No document content found. Please check permissions or ID.")
                             except Exception as e:
                                 st.error(f"Error: {e}")
 
