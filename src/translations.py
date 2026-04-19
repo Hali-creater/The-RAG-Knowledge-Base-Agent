@@ -42,6 +42,7 @@ TRANSLATIONS = {
         "connector_cloud_title": "☁️ Cloud Integrations",
         "connector_provider": "Provider",
         "connector_modal_title": "Connect to External Data",
+ fix-gdrive-auth-timeout-17440176441863980092
         "connector_gdrive_id": "GDrive Folder ID",
         "connector_gdrive_creds": "Credentials JSON Path (Optional)",
         "connector_gdrive_token": "Token JSON Path (Optional)",
@@ -51,6 +52,9 @@ TRANSLATIONS = {
         "connector_ms_url_label": "Paste redirect URL here",
         "connector_status_connected": "✅ Connected",
         "connector_status_disconnected": "❌ Not Connected",
+
+        "connector_gdrive_id": "GDrive Link or ID (Folder/File)",
+ main
         "connector_onedrive_id": "OneDrive Drive ID",
         "connector_sharepoint_id": "SharePoint Site ID",
         "connector_process": "Sync & Process",
@@ -123,6 +127,7 @@ TRANSLATIONS = {
         "connector_cloud_title": "☁️ Cloud-Integrationen",
         "connector_provider": "Anbieter",
         "connector_modal_title": "Mit externen Daten verbinden",
+ fix-gdrive-auth-timeout-17440176441863980092
         "connector_gdrive_id": "GDrive Ordner-ID",
         "connector_gdrive_creds": "Anmeldedaten JSON-Pfad (Optional)",
         "connector_gdrive_token": "Token JSON-Pfad (Optional)",
@@ -132,6 +137,9 @@ TRANSLATIONS = {
         "connector_ms_url_label": "Weiterleitungs-URL hier einfügen",
         "connector_status_connected": "✅ Verbunden",
         "connector_status_disconnected": "❌ Nicht verbunden",
+
+        "connector_gdrive_id": "GDrive Link oder ID (Ordner/Datei)",
+ main
         "connector_onedrive_id": "OneDrive Drive-ID",
         "connector_sharepoint_id": "SharePoint Site-ID",
         "connector_process": "Synchronisieren & Verarbeiten",
@@ -204,6 +212,7 @@ TRANSLATIONS = {
         "connector_cloud_title": "☁️ Intégrations Cloud",
         "connector_provider": "Fournisseur",
         "connector_modal_title": "Connexion aux données externes",
+ fix-gdrive-auth-timeout-17440176441863980092
         "connector_gdrive_id": "ID du dossier GDrive",
         "connector_gdrive_creds": "Chemin JSON des identifiants (Optionnel)",
         "connector_gdrive_token": "Chemin JSON du jeton (Optionnel)",
@@ -213,6 +222,9 @@ TRANSLATIONS = {
         "connector_ms_url_label": "Collez l'URL de redirection ici",
         "connector_status_connected": "✅ Connecté",
         "connector_status_disconnected": "❌ Non connecté",
+
+        "connector_gdrive_id": "Lien ou ID GDrive (Dossier/Fichier)",
+ main
         "connector_onedrive_id": "ID du lecteur OneDrive",
         "connector_sharepoint_id": "ID du site SharePoint",
         "connector_process": "Synchroniser et traiter",
