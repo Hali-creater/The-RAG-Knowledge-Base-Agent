@@ -162,11 +162,25 @@ class RAGAgent:
         logger.info(f"Ingesting from {connector_type} into {knowledge_area}")
         try:
             if connector_type == "GDrive":
-                docs = ConnectorManager.load_from_gdrive(params.get("folder_id"), params.get("service_account_path"))
+                docs = ConnectorManager.load_from_gdrive(
+                    input_id=params.get("folder_id") or params.get("input_id"),
+                    service_account_path=params.get("service_account_path"),
+                    token_path=params.get("token_path", "token.json")
+                )
             elif connector_type == "OneDrive":
-                docs = ConnectorManager.load_from_onedrive(params.get("drive_id"), params.get("folder_path"))
+                docs = ConnectorManager.load_from_onedrive(
+                    drive_id=params.get("drive_id"),
+                    folder_path=params.get("folder_path"),
+                    client_id=params.get("ms_client_id"),
+                    client_secret=params.get("ms_client_secret")
+                )
             elif connector_type == "SharePoint":
-                docs = ConnectorManager.load_from_sharepoint(params.get("site_id"), params.get("document_library_id"))
+                docs = ConnectorManager.load_from_sharepoint(
+                    site_id=params.get("site_id"),
+                    document_library_id=params.get("document_library_id"),
+                    client_id=params.get("ms_client_id"),
+                    client_secret=params.get("ms_client_secret")
+                )
             else:
                 raise ValueError(f"Unknown connector type: {connector_type}")
 
