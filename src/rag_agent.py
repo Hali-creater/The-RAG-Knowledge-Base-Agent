@@ -9,7 +9,6 @@ from src.text_splitter import TextSplitter
 from src.audit_logger import log_query
 from src.gold_standard import get_gold_standard, save_gold_standard
 from src.utils import get_file_hash, ROLE_PERMISSIONS
-from src.connectors import ConnectorManager
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -156,45 +155,6 @@ class RAGAgent:
     def clear_database(self):
         logger.warning("Clearing entire vector database...")
         return self.vector_store.clear_database()
-
-    def ingest_from_connector(self, connector_type: str, params: Dict, knowledge_area: str = "General"):
-        """Ingest documents from external connectors."""
-        logger.info(f"Ingesting from {connector_type} into {knowledge_area}")
-        try:
-            if connector_type == "GDrive":
-                docs = ConnectorManager.load_from_gdrive(
-                    input_id=params.get("folder_id") or params.get("input_id"),
-                    service_account_path=params.get("service_account_path"),
-                    token_path=params.get("token_path", "token.json")
-                )
-            elif connector_type == "OneDrive":
-                docs = ConnectorManager.load_from_onedrive(
-                    drive_id=params.get("drive_id"),
-                    folder_path=params.get("folder_path"),
-                    client_id=params.get("ms_client_id"),
-                    client_secret=params.get("ms_client_secret")
-                )
-            elif connector_type == "SharePoint":
-                docs = ConnectorManager.load_from_sharepoint(
-                    site_id=params.get("site_id"),
-                    document_library_id=params.get("document_library_id"),
-                    client_id=params.get("ms_client_id"),
-                    client_secret=params.get("ms_client_secret")
-                )
-            else:
-                raise ValueError(f"Unknown connector type: {connector_type}")
-
-            if not docs:
-                return {"chunks": 0, "message": "No documents found."}
-
-            chunks = self.text_splitter.split_documents(docs)
-            self.vector_store.add_documents(chunks)
-
-            logger.success(f"Successfully ingested {len(chunks)} chunks from {connector_type}")
-            return {"chunks": len(chunks)}
-        except Exception as e:
-            logger.error(f"Failed to ingest from {connector_type}: {e}")
-            raise
 
     def answer_question(self, question: str, knowledge_area: str = "General", assistant_type: str = "General", language: str = "🇺🇸 English", **kwargs) -> Dict:
         logger.info(f"Answering question: {question} in area: {knowledge_area} as {assistant_type} in {language}")

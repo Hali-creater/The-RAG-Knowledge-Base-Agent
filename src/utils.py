@@ -25,39 +25,6 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'md'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-import re
-
-def detect_cloud_provider(url: str):
-    """Detect cloud provider from URL and return (provider, extracted_id)."""
-    if "drive.google.com" in url or "docs.google.com" in url:
-        return "GDrive", extract_id_from_url(url)
-    elif "sharepoint.com" in url:
-        # Site ID is often not in the URL, but the site path is.
-        # For simplicity, we'll return the URL and let the connector handle it.
-        return "SharePoint", url
-    elif "onedrive.live.com" in url or "1drv.ms" in url:
-        return "OneDrive", url
-    return None, url
-
-def extract_id_from_url(url: str) -> str:
-    """Extract Folder or File ID from a GDrive URL."""
-    # Folder ID: .../folders/ID
-    folder_match = re.search(r'folders/([a-zA-Z0-9_-]+)', url)
-    if folder_match:
-        return folder_match.group(1)
-
-    # File/Doc ID: .../d/ID/...
-    file_match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
-    if file_match:
-        return file_match.group(1)
-
-    # Query param: ...?id=ID
-    query_match = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', url)
-    if query_match:
-        return query_match.group(1)
-
-    return url # Return as-is if no match (assume it's already an ID)
-
 def get_file_hash(filepath):
     """Generate SHA-256 hash of file content for deduplication."""
     hasher = hashlib.sha256()
