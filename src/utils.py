@@ -27,6 +27,18 @@ def allowed_file(filename):
 
 import re
 
+def detect_cloud_provider(url: str):
+    """Detect cloud provider from URL and return (provider, extracted_id)."""
+    if "drive.google.com" in url or "docs.google.com" in url:
+        return "GDrive", extract_id_from_url(url)
+    elif "sharepoint.com" in url:
+        # Site ID is often not in the URL, but the site path is.
+        # For simplicity, we'll return the URL and let the connector handle it.
+        return "SharePoint", url
+    elif "onedrive.live.com" in url or "1drv.ms" in url:
+        return "OneDrive", url
+    return None, url
+
 def extract_id_from_url(url: str) -> str:
     """Extract Folder or File ID from a GDrive URL."""
     # Folder ID: .../folders/ID
