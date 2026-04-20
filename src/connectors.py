@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 from typing import List
 from langchain_core.documents import Document
@@ -88,7 +89,7 @@ class ConnectorManager:
 
     @staticmethod
     def load_from_onedrive(drive_id: str, folder_path: str = None, client_id: str = None, client_secret: str = None) -> List[Document]:
-        """Load documents from OneDrive."""
+        """Load documents from OneDrive. If drive_id is a URL, try to handle it."""
         logger.info(f"Loading from OneDrive: {drive_id}")
 
         with ms_env_lock:
@@ -119,8 +120,16 @@ class ConnectorManager:
 
     @staticmethod
     def load_from_sharepoint(site_id: str, document_library_id: str = None, client_id: str = None, client_secret: str = None) -> List[Document]:
-        """Load documents from SharePoint."""
+        """Load documents from SharePoint. If site_id is a URL, try to handle it."""
         logger.info(f"Loading from SharePoint site: {site_id}")
+
+        # Site ID Extraction from URL if provided
+        if site_id and site_id.startswith("http"):
+            # Simple heuristic: extract site name
+            # https://tenant.sharepoint.com/sites/SiteName/...
+            match = re.search(r'sites/([^/]+)', site_id)
+            if match:
+                site_id = match.group(1)
 
         with ms_env_lock:
             old_id = os.environ.get("O365_CLIENT_ID")
