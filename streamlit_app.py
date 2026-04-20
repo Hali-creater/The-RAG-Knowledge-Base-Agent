@@ -7,7 +7,6 @@ from src.rag_agent import RAGAgent
 from src.utils import ensure_dirs, allowed_file, ROLE_PERMISSIONS
 from src.audit_logger import get_audit_logs
 from src.translations import TRANSLATIONS
-from src.connectors import ConnectorManager
 
 # Set page config
 st.set_page_config(
@@ -261,23 +260,6 @@ with st.sidebar:
             index=2
         )
 
-        if st.session_state.user_role == "Admin":
-            st.markdown("---")
-            st.markdown("### ☁️ Cloud Setup")
-            gdrive_creds = st.text_input("GDrive Service Account JSON", placeholder="service_account.json", type="password")
-            ms_id = st.text_input("Microsoft Client ID", value=os.getenv("O365_CLIENT_ID", ""), type="password")
-            ms_secret = st.text_input("Microsoft Client Secret", value=os.getenv("O365_CLIENT_SECRET", ""), type="password")
-
-            if ms_id: os.environ["O365_CLIENT_ID"] = ms_id
-            if ms_secret: os.environ["O365_CLIENT_SECRET"] = ms_secret
-
-            if gdrive_creds:
-                 # Check if path exists or if it's raw JSON
-                 if os.path.exists(gdrive_creds):
-                      st.session_state.gdrive_creds_path = gdrive_creds
-                 else:
-                      st.warning("GDrive JSON not found at specified path.")
-
         persona_options = ["General", "HR", "Legal", "Finance", "Comparative"]
         # Find index if already in session_state, else 0
         current_persona = st.session_state.get("assistant_type", "General")
@@ -318,39 +300,6 @@ with st.sidebar:
                 index=0,
                 key="side_kb_area"
             )
-
-            st.markdown("---")
-            st.markdown(f"**{t['sidebar_connectors']}**")
-
-            with st.expander(t["connector_cloud_title"], expanded=False):
-                from src.utils import detect_cloud_provider
-                cloud_link = st.text_input(t["connector_link_label"], placeholder=t["connector_link_placeholder"])
-
-                if cloud_link:
-                    provider, extracted_val = detect_cloud_provider(cloud_link)
-                    if provider:
-                        st.success(f"{t['connector_auto_detect']} **{provider}**")
-
-                        if st.button(t["connector_process"], key="btn_cloud_sync"):
-                            with st.spinner(t["analyzing"]):
-                                try:
-                                    params = {"input_id": extracted_val}
-                                    # Use configured creds
-                                    if provider == "GDrive":
-                                        sc_path = st.session_state.get("gdrive_creds_path", "service_account.json")
-                                        if os.path.exists(sc_path):
-                                            params["service_account_path"] = sc_path
-
-                                    res = st.session_state.agent.ingest_from_connector(provider, params, knowledge_area=selected_area)
-                                    st.success(f"Ingested {res['chunks']} chunks!")
-                                except Exception as e:
-                                    st.error(f"Error: {e}")
-                    else:
-                        st.warning("Could not detect provider. Please use a direct link.")
-
-                st.markdown("---")
-                st.markdown(f"**{t['connector_instructions_title']}**")
-                st.info(f"**GDrive**: {t['connector_gdrive_hint']}\n\n**MS**: {t['connector_ms_hint']}")
 
             uploaded_files = st.file_uploader(
                 t["sidebar_drop"],
