@@ -246,6 +246,12 @@ class RAGAgent:
                 "points": "Points clés",
                 "insights": "Aperçus",
                 "sources": "Sources"
+            },
+            "🇨🇳 Chinese": {
+                "summary": "总结",
+                "points": "关键点",
+                "insights": "见解",
+                "sources": "来源"
             }
         }
         struct = structure_map.get(language, structure_map["🇺🇸 English"])

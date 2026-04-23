@@ -235,6 +235,8 @@ if "language" not in st.session_state:
             st.session_state.language = "🇩🇪 German"
         elif user_lang.startswith("fr"):
             st.session_state.language = "🇫🇷 French"
+        elif user_lang.startswith("zh"):
+            st.session_state.language = "🇨🇳 Chinese"
         else:
             st.session_state.language = "🇺🇸 English"
     else:
